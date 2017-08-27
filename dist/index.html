@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/app.css" rel="stylesheet">
+  </head>
+  <body>
+  <div class="container">
+    <div class="row">
+      <h1>Rule 110</h1>
+    </div>
+    <div class="row">
+      <p class="lead">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+    </div>
+    <div class="row">
+      <h3>Game</h3>
+    </div>
+    <div id="game">
+      <table class="table table-condensed table-sm borderless">
+        <tbody>
+          <tr class="row">
+            <th class="col-md-2">Address</th>
+            <td class="col-md-10" id="game-address"></td>
+          </tr>
+          <tr class="row">
+            <th class="col-md-2">Description</th>
+            <td class="col-md-10" id="game-description"></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="row">
+        <div class="board"></div>
+      </div>
+      <div class="text-center">
+          <button id="evolve-button" type="button" class="btn btn-success" disabled>Evolve</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <h3>Game List</h3>
+    </div>
+    <div id="game-list" class="row">
+      <table class="table borderless">
+        <thead>
+          <tr>
+            <th>Address</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="row">
+      <h3>Create Game</h3>
+    </div>
+    <div id="game-create">
+      <div class="row">
+        <div class="form-group">
+          <div class="input-group">
+            <span class="input-group-addon" id="sizing-addon1">Initial Cells (left)</span>
+            <input id="create-initial-cells-1" type="text" class="form-control mono" aria-describedby="sizing-addon1" value="0x5555555555555555555555555555555555555555555555555555555555555555">
+          </div>
+          <div class="input-group">
+            <span class="input-group-addon" id="sizing-addon2">Initial Cells (middle)</span>
+            <input id="create-initial-cells-2" type="text" class="form-control mono" aria-describedby="sizing-addon2" value="0x5555555555555555555555555555555555555555555555555555555555555555">
+          </div>
+          <div class="input-group">
+            <span class="input-group-addon" id="sizing-addon3">Initial Cells (right)</span>
+            <input id="create-initial-cells-3" type="text" class="form-control mono" aria-describedby="sizing-addon3" value="0x5555555555555555555555555555555555555555555555555555555555555555">
+          </div>
+          <div class="input-group">
+            <span class="input-group-addon" id="sizing-addon4">Description</span>
+            <input id="create-description" type="text" class="form-control" aria-describedby="sizing-addon4" value="test">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="board"></div>
+      </div>
+      <div class="text-center">
+        <button id="create-button" type="button" class="btn btn-success" disabled>Create</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <h3>Tip Box</h3>
+    </div>
+    <div id="tipbox">
+      <div class="row">
+        <div class="form-group">
+          <div class="input-group">
+            <span class="input-group-addon" id="sizing-addon5">Amount</span>
+            <input id="tip-amount" type="text" class="form-control" aria-label="Amount" aria-describedby="sizing-addon5" value="0.003">
+            <span class="input-group-addon">ETH</span>
+          </div>
+        </div>
+      </div>
+      <div class="text-center">
+        <button id="tip-button" type="button" class="btn btn-success" disabled>Tip</button>
+      </div>
+    </div>
+
+  </div>
+  <script src="js/jquery-3.2.1.min.js"></script>
+  <script src="js/popper.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <script src="js/web3.min.js"></script>
+  <script src="js/app.js"></script>
+  </body>
+</html>
