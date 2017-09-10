@@ -16,6 +16,7 @@ var Model = function (web3) {
   this.web3 = web3;
   this.FactoryContract = null;
   this.GameContract = null;
+  this.defaultGasPrice = null;
   this.tipAddress = null;
 
   /* State */
@@ -35,24 +36,23 @@ var Model = function (web3) {
 
 Model.prototype = {
   init: function () {
-    this.defaultGasPrice = web3.toBigNumber(web3.toWei("4", "gwei"));
-    this.tipAddress = "0x0"; // FIXME
+    var self = this;
 
-    var model = this;
+    $.getJSON('config.json', function (config) {
+      var network_id = self.web3.version.network;
 
-    $.getJSON('Rule110.json', function (data) {
-      model.GameContract = model.web3.eth.contract(data.abi);
-    }).then(function () {
-      $.getJSON('Rule110Factory.json', function (data) {
-        model.FactoryContract = model.web3.eth.contract(data.abi);
+      self.GameContract = self.web3.eth.contract(config.contracts.Rule110);
+      self.FactoryContract = self.web3.eth.contract(config.contracts.Rule110Factory);
 
-        if (data.networks[model.web3.version.network] == undefined) {
-          console.error('[Model] Network mismatch for contract.');
-        } else {
-          model.factoryInstance = model.FactoryContract.at(data.networks[model.web3.version.network].address);
-          model.gameCreatedEvent = model.factoryInstance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'}, model.handleGameCreatedEvent.bind(model));
-        }
-      });
+      if (config.networks[network_id] == undefined) {
+        console.error('[Model] Not deployed on network: ' + network_id);
+      } else {
+        self.tipAddress = config.networks[network_id].tipAddress;
+        self.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[network_id].defaultGasPrice, "gwei"));
+        self.factoryInstance = self.FactoryContract.at(config.networks[network_id].factoryAddress);
+
+        self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'}, self.handleGameCreatedEvent.bind(self));
+      }
     });
   },
 
