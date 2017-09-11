@@ -30,6 +30,7 @@ var Model = function (web3) {
   this.gameStateUpdatedEvent = null;
 
   /* Callbacks */
+  this.connectedCallback = null;
   this.gameAddedCallback = null;
   this.gameStateUpdatedCallback = null;
 };
@@ -50,6 +51,8 @@ Model.prototype = {
         self.tipAddress = config.networks[network_id].tipAddress;
         self.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[network_id].defaultGasPrice, "gwei"));
         self.factoryInstance = self.FactoryContract.at(config.networks[network_id].factoryAddress);
+
+        self.connectedCallback(network_id, self.web3.isConnected(), true, true);
 
         self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'}, self.handleGameCreatedEvent.bind(self));
       }
@@ -149,7 +152,7 @@ Model.prototype = {
 var View = function () {
   /* State */
   this.gameSelectedElement = null;
-  this.gameListReady = false;
+  this.networkState = {id: null, isConnected: false, isDeployed: false, hasWallet: false};
 
   /* Callbacks */
   this.buttonGameSelectCallback = null;
@@ -160,9 +163,10 @@ var View = function () {
 
 View.prototype = {
   init: function () {
-    /* Disable evolve and create buttons until game is loaded */
+    /* Disable evolve and create buttons until we're connected */
     $('#evolve-button').prop('disabled', true);
     $('#create-button').prop('disabled', true);
+    $('#tip-button').prop('disabled', true);
 
     /* Bind buttons */
     $('#evolve-button').click(this.handleButtonEvolve.bind(this));
@@ -180,6 +184,21 @@ View.prototype = {
 
   /* Event update handlers */
 
+  handleConnectedEvent: function (networkId, isConnected, isDeployed, hasWallet) {
+    this.networkState.id = networkId;
+    this.networkState.isConnected = isConnected;
+    this.networkState.isDeployed = isDeployed;
+    this.networkState.hasWallet = hasWallet;
+
+    /* Enable tip button if connected and user has wallet */
+    if (isConnected && hasWallet)
+      $('#tip-button').prop('disabled', false);
+
+    /* Enable create button if connected, deployed, and user has wallet */
+    if (isConnected && isDeployed && hasWallet)
+      $('#create-button').prop('disabled', false);
+  },
+
   handleGameAddedEvent: function (index, address, description) {
     console.log("[View] Adding game with address " + address + " and description " + description);
 
@@ -196,15 +215,9 @@ View.prototype = {
     /* Add to game list */
     $('#game-list').find("tbody").first().append(elem);
 
-    if (!this.gameListReady) {
-      /* Enable create button */
-      $('#create-button').prop('disabled', false);
-
-      /* Select first game */
+    /* Select first game, if a game hasn't been selected yet */
+    if (this.gameSelectedElement == null)
       this.handleButtonGameSelect(0);
-
-      this.gameListReady = true;
-    }
   },
 
   handleGameStateUpdatedEvent: function (cells, txid) {
@@ -250,8 +263,9 @@ View.prototype = {
       elem.addClass('table-success');
       self.gameSelectedElement = elem;
 
-      /* Enable evolve button */
-      $('#evolve-button').prop('disabled', false);
+      /* Enable evolve button if connected and user has wallet */
+      if (self.networkState.isConnected && self.networkState.hasWallet)
+        $('#evolve-button').prop('disabled', false);
 
       /* Update game address */
       $('#game-address').text(result.address);
@@ -420,6 +434,7 @@ var Controller = function (model, view) {
 Controller.prototype = {
   init: function () {
     /* Bind model -> view */
+    this.model.connectedCallback = this.view.handleConnectedEvent.bind(this.view);
     this.model.gameAddedCallback = this.view.handleGameAddedEvent.bind(this.view);
     this.model.gameStateUpdatedCallback = this.view.handleGameStateUpdatedEvent.bind(this.view);
 
