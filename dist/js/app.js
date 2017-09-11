@@ -237,48 +237,50 @@ View.prototype = {
     /* Clear game board */
     $('#game .board').empty();
 
-    this.buttonGameSelectCallback(index, function (error, result) {
-      if (error) {
-        console.log("[View] Game select failed");
-        console.error(error);
+    var self = this;
 
-        /* FIXME show error modal */
-      } else {
-        console.log("[View] Game select succeeded, index " + index);
+    this.buttonGameSelectCallback(index, function (result) {
+      console.log("[View] Game select, index " + index);
 
-        /* Update active element in game list */
-        if (this.gameSelectedElement)
-          this.gameSelectedElement.removeClass('table-success');
+      /* Update active element in game list */
+      if (self.gameSelectedElement)
+        self.gameSelectedElement.removeClass('table-success');
 
-        var elem = $('#game-list').find("tbody").find("tr").eq(index);
-        elem.addClass('table-success');
-        this.gameSelectedElement = elem;
+      var elem = $('#game-list').find("tbody").find("tr").eq(index);
+      elem.addClass('table-success');
+      self.gameSelectedElement = elem;
 
-        /* Enable evolve button */
-        $('#evolve-button').prop('disabled', false);
+      /* Enable evolve button */
+      $('#evolve-button').prop('disabled', false);
 
-        /* Update game address */
-        $('#game-address').text(result.address);
+      /* Update game address */
+      $('#game-address').text(result.address);
 
-        /* Update game description */
-        $('#game-description').text(result.description);
-      }
+      /* Update game description */
+      $('#game-description').text(result.description);
     });
   },
 
   handleButtonEvolve: function () {
     console.log("[View] Evolve button clicked");
 
+    var self = this;
+
     this.buttonEvolveCallback(function (error, result) {
       if (error) {
         console.log("[View] Evolve failed");
         console.error(error);
 
-        /* FIXME show error modal */
+        var msg = $("<span></span>").text(error.message.split('\n')[0]);
+        self.showResultModal(false, "Evolve failed", msg);
       } else {
         console.log("[View] Evolve succeeded, txid " + result);
 
-        /* FIXME show success modal with txid */
+        var msg = $("<span></span>").text("Transaction ID: ")
+                                    .append($("<a></a>")
+                                            .attr('href', '#')
+                                            .text(result));
+        self.showResultModal(true, "Evolve succeeded", msg);
       }
     });
   },
@@ -291,22 +293,41 @@ View.prototype = {
     var initialCells3 = $('#create-initial-cells-3').val();
     var description = $('#create-description').val();
 
-    /* FIXME add validation */
+    /* Validate cells are a number */
+    try {
+      var cells = [web3.toBigNumber(initialCells1),
+                   web3.toBigNumber(initialCells2),
+                   web3.toBigNumber(initialCells3)];
+    } catch (err) {
+      this.showResultModal(false, "Error", "Game initial cells is not a number.");
+      return;
+    }
 
-    var cells = [web3.toBigNumber(initialCells1),
-                 web3.toBigNumber(initialCells2),
-                 web3.toBigNumber(initialCells3)];
+    /* Validate description is 32 chars or less */
+    if (description.length > 32) {
+      this.showResultModal(false, "Error", "Game description is too long: got " + description.length + " characters, max is 32.");
+      return;
+    }
+
+    var self = this;
 
     this.buttonCreateCallback(cells, description, function (error, result) {
       if (error) {
         console.log("[View] Create failed");
         console.error(error);
 
-        /* FIXME show error modal */
+        var msg = $("<span></span>").text(error.message.split('\n')[0]);
+        self.showResultModal(false, "Create game failed", msg);
       } else {
-        console.log("[View] Create succeeded, txid " + txid);
+        console.log("[View] Create succeeded, txid " + result);
 
-        /* FIXME show success modal with txid */
+        /* FIXME get new game address */
+
+        var msg = $("<span></span>").text("Transaction ID: ")
+                                    .append($("<a></a>")
+                                            .attr('href', '#')
+                                            .text(result));
+        self.showResultModal(true, "Create game succeeded", msg);
       }
     });
   },
@@ -316,20 +337,29 @@ View.prototype = {
 
     var amount = $('#tip-amount').val();
 
-    /* FIXME add validation */
+    /* Validate amount is a number */
+    if (isNaN(amount)) {
+      this.showResultModal(false, "Error", "Tip amount is not a number.");
+      return;
+    }
+
+    var self = this;
 
     this.buttonTipCallback(amount, function (error, result) {
       if (error) {
         console.log("[View] Tip failed");
         console.error(error);
 
-        /* FIXME show error modal */
-        alert("Error: " + error.toString());
+        var msg = $("<span></span>").text(error.message.split('\n')[0]);
+        self.showResultModal(false, "Tip failed", msg);
       } else {
         console.log("[View] Tip succeeded, txid " + result);
 
-        /* FIXME show success modal with txid */
-        alert("Success, txid: " + result);
+        var msg = $("<span></span>").text("Transaction ID: ")
+                                    .append($("<a></a>")
+                                            .attr('href', '#')
+                                            .text(result));
+        self.showResultModal(true, "Tip succeeded", msg);
       }
     });
   },
@@ -357,6 +387,24 @@ View.prototype = {
       $('#game-create .board').html($('<span></span>')
                                      .text(cells));
     } catch (err) { }
+  },
+
+  /* Success/failure Modal */
+
+  showResultModal: function (success, heading, body) {
+    if (success) {
+      $('#result-modal .modal-title').text(heading)
+                                     .removeClass('text-danger')
+                                     .addClass('text-info');
+    } else {
+      $('#result-modal .modal-title').text(heading)
+                                     .removeClass('text-info')
+                                     .addClass('text-danger');
+    }
+
+    $('#result-modal .modal-body').html(body);
+
+    $('#result-modal').modal();
   }
 };
 

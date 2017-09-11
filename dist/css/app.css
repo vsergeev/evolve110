@@ -97,3 +97,10 @@ hr {
 #tipbox button {
   min-width: 10rem;
 }
+
+/******************************************************************************/
+
+#result-modal .modal-body span {
+  word-wrap: break-word;
+  font-family: monospace;
+}
