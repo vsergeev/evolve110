@@ -46,13 +46,17 @@ Model.prototype = {
       self.FactoryContract = self.web3.eth.contract(config.contracts.Rule110Factory);
 
       if (config.networks[network_id] == undefined) {
-        console.error('[Model] Not deployed on network: ' + network_id);
+        console.log('[Model] Not deployed on network id ' + network_id);
+
+        self.connectedCallback(network_id, self.web3.isConnected(), false, false);
       } else {
+        console.log('[Model] Loading model for network id ' + network_id);
+
         self.tipAddress = config.networks[network_id].tipAddress;
         self.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[network_id].defaultGasPrice, "gwei"));
         self.factoryInstance = self.FactoryContract.at(config.networks[network_id].factoryAddress);
 
-        self.connectedCallback(network_id, self.web3.isConnected(), true, true);
+        self.connectedCallback(network_id, self.web3.isConnected(), true, web3.eth.defaultAccount != undefined);
 
         self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'}, self.handleGameCreatedEvent.bind(self));
       }
@@ -149,6 +153,13 @@ Model.prototype = {
 /* View */
 /******************************************************************************/
 
+var NETWORK_BLOCK_EXPLORER = {
+  1: "https://etherscan.io",
+  3: "https://ropsten.etherscan.io",
+  4: "https://rinkeby.etherscan.io",
+  42: "https://kovan.etherscan.io",
+};
+
 var View = function () {
   /* State */
   this.gameSelectedElement = null;
@@ -163,11 +174,6 @@ var View = function () {
 
 View.prototype = {
   init: function () {
-    /* Disable evolve and create buttons until we're connected */
-    $('#evolve-button').prop('disabled', true);
-    $('#create-button').prop('disabled', true);
-    $('#tip-button').prop('disabled', true);
-
     /* Bind buttons */
     $('#evolve-button').click(this.handleButtonEvolve.bind(this));
     $('#create-button').click(this.handleButtonCreate.bind(this));
@@ -205,6 +211,7 @@ View.prototype = {
     /* Create row for game list */
     var elem = $('<tr></tr>')
                 .append($('<td></td>')
+                  .addClass('mono')
                   .append($('<a />')
                     .attr('href', '#')
                     .text(address)
@@ -229,7 +236,7 @@ View.prototype = {
 
     /* Add row to game board */
     $('#game .board').append($('<span></span>')
-                              .html(cells))
+                              .html(this.formatTxidLink(txid, cells)))
                      .append($('<br/>'));
   },
 
@@ -257,18 +264,19 @@ View.prototype = {
 
       /* Update active element in game list */
       if (self.gameSelectedElement)
-        self.gameSelectedElement.removeClass('table-success');
+        self.gameSelectedElement.removeClass('table-info');
 
-      var elem = $('#game-list').find("tbody").find("tr").eq(index);
-      elem.addClass('table-success');
-      self.gameSelectedElement = elem;
+      self.gameSelectedElement = $('#game-list').find("tbody")
+                                                .find("tr")
+                                                .eq(index)
+                                                .addClass('table-info');
 
       /* Enable evolve button if connected and user has wallet */
       if (self.networkState.isConnected && self.networkState.hasWallet)
         $('#evolve-button').prop('disabled', false);
 
       /* Update game address */
-      $('#game-address').text(result.address);
+      $('#game-address').append(self.formatAddressLink(result.address, result.address, true));
 
       /* Update game description */
       $('#game-description').text(result.description);
@@ -280,7 +288,7 @@ View.prototype = {
 
     var self = this;
 
-    this.buttonEvolveCallback(function (error, result) {
+    this.buttonEvolveCallback(function (error, txid) {
       if (error) {
         console.log("[View] Evolve failed");
         console.error(error);
@@ -288,12 +296,10 @@ View.prototype = {
         var msg = $("<span></span>").text(error.message.split('\n')[0]);
         self.showResultModal(false, "Evolve failed", msg);
       } else {
-        console.log("[View] Evolve succeeded, txid " + result);
+        console.log("[View] Evolve succeeded, txid " + txid);
 
         var msg = $("<span></span>").text("Transaction ID: ")
-                                    .append($("<a></a>")
-                                            .attr('href', '#')
-                                            .text(result));
+                                    .append(self.formatTxidLink(txid, txid, true));
         self.showResultModal(true, "Evolve succeeded", msg);
       }
     });
@@ -325,7 +331,7 @@ View.prototype = {
 
     var self = this;
 
-    this.buttonCreateCallback(cells, description, function (error, result) {
+    this.buttonCreateCallback(cells, description, function (error, txid) {
       if (error) {
         console.log("[View] Create failed");
         console.error(error);
@@ -333,14 +339,12 @@ View.prototype = {
         var msg = $("<span></span>").text(error.message.split('\n')[0]);
         self.showResultModal(false, "Create game failed", msg);
       } else {
-        console.log("[View] Create succeeded, txid " + result);
+        console.log("[View] Create succeeded, txid " + txid);
 
         /* FIXME get new game address */
 
         var msg = $("<span></span>").text("Transaction ID: ")
-                                    .append($("<a></a>")
-                                            .attr('href', '#')
-                                            .text(result));
+                                    .append(self.formatTxidLink(txid, txid, true));
         self.showResultModal(true, "Create game succeeded", msg);
       }
     });
@@ -359,7 +363,7 @@ View.prototype = {
 
     var self = this;
 
-    this.buttonTipCallback(amount, function (error, result) {
+    this.buttonTipCallback(amount, function (error, txid) {
       if (error) {
         console.log("[View] Tip failed");
         console.error(error);
@@ -367,12 +371,10 @@ View.prototype = {
         var msg = $("<span></span>").text(error.message.split('\n')[0]);
         self.showResultModal(false, "Tip failed", msg);
       } else {
-        console.log("[View] Tip succeeded, txid " + result);
+        console.log("[View] Tip succeeded, txid " + txid);
 
         var msg = $("<span></span>").text("Transaction ID: ")
-                                    .append($("<a></a>")
-                                            .attr('href', '#')
-                                            .text(result));
+                                    .append(self.formatTxidLink(txid, txid, true));
         self.showResultModal(true, "Tip succeeded", msg);
       }
     });
@@ -419,7 +421,45 @@ View.prototype = {
     $('#result-modal .modal-body').html(body);
 
     $('#result-modal').modal();
-  }
+  },
+
+  /* Helper functions to format block explorer links */
+
+  formatTxidLink: function (txid, text, addIcon) {
+    var baseUrl = NETWORK_BLOCK_EXPLORER[this.networkState.id];
+
+    if (baseUrl) {
+      var elem = $('<a></a>')
+                 .attr('href', baseUrl + "/tx/" + txid)
+                 .attr('target', '_blank')
+                 .text(text);
+
+      if (addIcon)
+        elem = elem.append($('<i></i>').addClass('icon-link-ext'));
+
+      return elem;
+    } else {
+      return text;
+    }
+  },
+
+  formatAddressLink: function (address, text, addIcon) {
+    var baseUrl = NETWORK_BLOCK_EXPLORER[this.networkState.id];
+
+    if (baseUrl) {
+      var elem = $('<a></a>')
+                 .attr('href', baseUrl + "/address/" + address)
+                 .attr('target', '_blank')
+                 .text(text);
+
+      if (addIcon)
+        elem = elem.append($('<i></i>').addClass('icon-link-ext'));
+
+      return elem;
+    } else {
+      return text;
+    }
+  },
 };
 
 /******************************************************************************/

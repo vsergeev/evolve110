@@ -17,6 +17,15 @@ hr {
   margin-bottom: 1rem;
 }
 
+.mono {
+  font-family: monospace;
+  font-size: 1.2rem;
+}
+
+.icon-link-ext {
+  font-size: 0.8rem;
+}
+
 /******************************************************************************/
 
 #game button {
@@ -32,6 +41,10 @@ hr {
   border-style: solid;
   border-color: #ddd;
   margin-bottom: 1rem;
+}
+
+#game .board a:hover {
+  text-decoration: none;
 }
 
 #game .board span {
@@ -55,11 +68,6 @@ hr {
 
 #game-create .form-group .input-group {
   margin-bottom: 0.25rem;
-}
-
-#game-create .form-group .mono {
-  font-family: monospace;
-  font-size: 1.2rem;
 }
 
 #game-create .board {
@@ -102,5 +110,4 @@ hr {
 
 #result-modal .modal-body span {
   word-wrap: break-word;
-  font-family: monospace;
 }
