@@ -1,5 +1,5 @@
 body {
-  padding-top: 2rem;
+  padding-top: 3rem;
   padding-bottom: 2rem;
 }
 
@@ -110,4 +110,29 @@ hr {
 
 #result-modal .modal-body span {
   word-wrap: break-word;
+}
+
+/******************************************************************************/
+
+#status-bar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  line-height: 1.5rem;
+  background-color: #222;
+  z-index: 3;
+}
+
+#status-bar #status-bar-game-factory a {
+  color: inherit;
+}
+
+#status-bar table {
+  font-size: 0.8rem;
+  color: white;
+  width: 100%;
+}
+
+#status-bar table td {
+  width: 25%;
 }
