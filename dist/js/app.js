@@ -91,10 +91,8 @@ Model.prototype = {
     if (error) {
       console.error(error);
     } else {
-      var cells = result.args.cells.map(toBitString).join("");
+      var cells = toBitString(result.args.cells);
       var txid = result.transactionHash;
-
-      cells = cells.substring(512); // FIXME
 
       this.activeGame.cells.push(cells);
 
@@ -140,11 +138,11 @@ Model.prototype = {
       this.gameInstance.evolve({gasPrice: this.defaultGasPrice}, callback);
   },
 
-  createGame: function (cells, description, callback) {
+  createGame: function (initialCells, description, callback) {
     if (!this.factoryInstance)
       callback("Factory instance not found.", null);
     else
-      this.factoryInstance.newRule110(...cells, description, {gasPrice: this.defaultGasPrice}, callback);
+      this.factoryInstance.newRule110(initialCells, description, {gasPrice: this.defaultGasPrice}, callback);
   },
 
   tip: function (amount, callback) {
@@ -190,9 +188,7 @@ View.prototype = {
     $('#tip-button').click(this.handleButtonTip.bind(this));
 
     /* Bind create inputs */
-    $('#create-initial-cells-1').on('input', this.handleCreateInputsChange.bind(this));
-    $('#create-initial-cells-2').on('input', this.handleCreateInputsChange.bind(this));
-    $('#create-initial-cells-3').on('input', this.handleCreateInputsChange.bind(this));
+    $('#create-initial-cells').on('input', this.handleCreateInputsChange.bind(this));
 
     /* Update create initial board */
     this.handleCreateInputsChange();
@@ -348,16 +344,12 @@ View.prototype = {
   handleButtonCreate: function () {
     console.log("[View] Create button clicked");
 
-    var initialCells1 = $('#create-initial-cells-1').val();
-    var initialCells2 = $('#create-initial-cells-2').val();
-    var initialCells3 = $('#create-initial-cells-3').val();
+    var initialCells = $('#create-initial-cells').val();
     var description = $('#create-description').val();
 
     /* Validate cells are a number */
     try {
-      var cells = [web3.toBigNumber(initialCells1),
-                   web3.toBigNumber(initialCells2),
-                   web3.toBigNumber(initialCells3)];
+      initialCells = web3.toBigNumber(initialCells);
     } catch (err) {
       this.showResultModal(false, "Error", "Game initial cells is not a number.");
       return;
@@ -371,7 +363,7 @@ View.prototype = {
 
     var self = this;
 
-    this.buttonCreateCallback(cells, description, function (error, txid) {
+    this.buttonCreateCallback(initialCells, description, function (error, txid) {
       if (error) {
         console.log("[View] Create failed");
         console.error(error);
@@ -423,25 +415,18 @@ View.prototype = {
   /* From input handlers */
 
   handleCreateInputsChange: function () {
-    var initialCells1 = $('#create-initial-cells-1').val();
-    var initialCells2 = $('#create-initial-cells-2').val();
-    var initialCells3 = $('#create-initial-cells-3').val();
+    var initialCells = $('#create-initial-cells').val();
 
     try {
-      cells = "";
-      cells += toBitString(web3.toBigNumber(initialCells1));
-      cells += toBitString(web3.toBigNumber(initialCells2));
-      cells += toBitString(web3.toBigNumber(initialCells3));
-
-      cells = cells.substring(512); // FIXME
+      initialCells = toBitString(web3.toBigNumber(initialCells));
 
       /* Replace bit strings with spaces / unicode blocks */
-      cells = cells.replace(/0/g, " ");
-      cells = cells.replace(/1/g, "■");
+      initialCells = initialCells.replace(/0/g, " ");
+      initialCells = initialCells.replace(/1/g, "■");
 
       /* Add to game create board */
       $('#game-create .board').html($('<span></span>')
-                                     .text(cells));
+                                     .text(initialCells));
     } catch (err) { }
   },
 
