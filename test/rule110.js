@@ -13,13 +13,30 @@ contract('Rule110', function(accounts) {
 
     var instance = await Rule110.new(size, initialCells);
     var receipt = web3.eth.getTransactionReceipt(instance.transactionHash);
-    assert(receipt.gasUsed < 600000, "Excessive gas used");
     assert.equal(receipt.logs.length, 1, "Invalid number of events produced");
 
     var gameState = await instance.state.call();
     assert(gameState.equals(initialCells), "Incorrect initial state");
     var gameSize = await instance.size.call();
     assert(gameSize.equals(size), "Incorrect initial size");
+  });
+
+  it("should not use excessive gas", async function () {
+    var size = 256;
+    var initialCells = web3.toBigNumber('0x3d271bef962c804c7abab3ad3887d126d4173f1b524e4b2937ba0e9e4228c24e');
+
+    /* Rule110.new() */
+    var instance = await Rule110.new(size, initialCells);
+    var gasNew = web3.eth.getTransactionReceipt(instance.transactionHash).gasUsed;
+
+    /* Rule110.evolve() */
+    var result = await instance.evolve();
+    var gasEvolve = result.receipt.gasUsed;
+
+    console.log("[Gas Usage] Rule110.new():               " + gasNew);
+    console.log("[Gas Usage] Rule110.evolve():            " + gasEvolve);
+
+    assert(gasEvolve < 45000, "Excessive gas used for Rule110.evolve()");
   });
 
   it("should evolve correctly", async function () {
@@ -75,7 +92,6 @@ contract('Rule110', function(accounts) {
 
         for (let expectedCells of game.evolution) {
             var result = await instance.evolve();
-            assert(result.receipt.gasUsed < 50000, "Excessive gas used");
             assert.equal(result.logs.length, 1, "Invalid number of events produced");
             assert.equal(result.logs[0].event, "GameStateUpdated", "Invalid event produced");
             assert(web3.toBigNumber(result.logs[0].args.cells.toString()).equals(expectedCells), "Invalid state");
@@ -95,7 +111,6 @@ contract('Rule110Factory', function(accounts) {
 
     var factoryInstance = await Rule110Factory.deployed();
     var result = await factoryInstance.newRule110(size, initialCells, description);
-    assert(result.receipt.gasUsed < 600000, "Excessive gas used");
     assert.equal(result.logs.length, 1, "Invalid number of events produced");
     assert.equal(result.logs[0].event, "GameCreated", "Invalid event produced");
     assert.equal(result.logs[0].args.size, size, "Invalid size");
@@ -106,5 +121,24 @@ contract('Rule110Factory', function(accounts) {
     assert(gameState.equals(initialCells), "Incorrect initial state");
     var gameSize = await gameInstance.size.call();
     assert(gameSize.equals(size), "Incorrect initial size");
+  });
+
+  it("should not use excessive gas", async function () {
+    var size = 256;
+    var initialCells = web3.toBigNumber('0x3d271bef962c804c7abab3ad3887d126d4173f1b524e4b2937ba0e9e4228c24e');
+    var description = "foobar";
+
+    /* Rule110Factory.new() */
+    var instance = await Rule110Factory.new();
+    var gasNew = web3.eth.getTransactionReceipt(instance.transactionHash).gasUsed;
+
+    /* Rule110Factory.newRule110() */
+    var factoryInstance = await Rule110Factory.deployed();
+    var result = await factoryInstance.newRule110(size, initialCells, description);
+    var gasNewRule110 = result.receipt.gasUsed;
+
+    console.log("[Gas Usage] Rule110Factory.new():        " + gasNew);
+    console.log("[Gas Usage] Rule110Factory.newRule110(): " + gasNewRule110);
+    assert(gasNewRule110 < 450000, "Excessive gas used for Rule110Factory.newRule110()");
   });
 })
