@@ -1,7 +1,7 @@
 var Rule110 = artifacts.require("Rule110");
 var Rule110Factory = artifacts.require("Rule110Factory");
 
-module.exports = function(deployer, network) {
+module.exports = async function(deployer, network) {
   if (network == "development") {
     var initialGames = [
       {description: "single cell", size: 256, evolutions: 25,
@@ -15,19 +15,14 @@ module.exports = function(deployer, network) {
     /* FIXME */
   }
 
-  return Rule110Factory.deployed().then(function (instance) {
-    return initialGames.reduce(function (acc, game) {
-      return acc.then(function () {
-        return instance.newRule110(game.size, game.initialCells, game.description).then(function (result) {
-          return Rule110.at(result.logs[0].args.game).then(function (instance) {
-            return (new Array(game.evolutions).fill()).reduce(function (acc, e) {
-              return acc.then(function () {
-                return instance.evolve().then(function (result) { });
-              });
-            }, Promise.resolve());
-          });
-        });
-      });
-    }, Promise.resolve());
-  });
+  var factoryInstance = await Rule110Factory.deployed();
+
+  for (let game of initialGames) {
+    var result = await factoryInstance.newRule110(game.size, game.initialCells, game.description);
+
+    var gameInstance = await Rule110.at(result.logs[0].args.game);
+    for (i = 0; i < game.evolutions; i++) {
+        var result = await gameInstance.evolve();
+    }
+  }
 }
