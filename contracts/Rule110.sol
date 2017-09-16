@@ -11,9 +11,10 @@ contract Rule110 {
         GameStateUpdated(initialCells);
     }
 
-    uint256 constant PAT1 = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe;
-    uint256 constant PAT2 = 0x9249249249249249249249249249249249249249249249249249249249249248;
-    uint256 constant MASK = 0x4924924924924924924924924924924924924924924924924924924924924924;
+    uint256 constant PAT1 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+    uint256 constant PAT2 = 0x4924924924924924924924924924924924924924924924924924924924924924;
+    uint256 constant MASK = 0x0492492492492492492492492492492492492492492492492492492492492492;
+    uint256 constant NUM_CELLS = 252;
 
     function evolve() {
         uint256 temp;
@@ -31,32 +32,26 @@ contract Rule110 {
         /* Find matches to pattern 111 */
         temp = state ^ PAT1;
         mat1 = (temp | (temp >> 1) | (temp << 1)) & MASK;
-        temp = ((state >> 1) | (state << 255)) ^ PAT1;
+        temp = ((state >> 1) | (state << (NUM_CELLS-1))) ^ PAT1;
         mat1 |= ((temp | (temp >> 1) | (temp << 1)) & MASK) << 1;
-        temp = ((state << 1) | (state >> 255)) ^ PAT1;
+        temp = ((state << 1) | (state >> (NUM_CELLS-1))) ^ PAT1;
         mat1 |= ((temp | (temp >> 1) | (temp << 1)) & MASK) >> 1;
-        temp = ((state << 2) | (state >> 254)) ^ PAT1;
-        mat1 |= ((temp | (temp >> 1) | (temp << 1)) & MASK) >> 2;
 
         /* Find matches to pattern 100 */
         temp = state ^ PAT2;
         mat2 = (temp | (temp >> 1) | (temp << 1)) & MASK;
-        temp = ((state >> 1) | (state << 255)) ^ PAT2;
+        temp = ((state >> 1) | (state << (NUM_CELLS-1))) ^ PAT2;
         mat2 |= ((temp | (temp >> 1) | (temp << 1)) & MASK) << 1;
-        temp = ((state << 1) | (state >> 255)) ^ PAT2;
+        temp = ((state << 1) | (state >> (NUM_CELLS-1))) ^ PAT2;
         mat2 |= ((temp | (temp >> 1) | (temp << 1)) & MASK) >> 1;
-        temp = ((state << 2) | (state >> 254)) ^ PAT2;
-        mat2 |= ((temp | (temp >> 1) | (temp << 1)) & MASK) >> 2;
 
         /* Find matches to pattern 000 */
         temp = state;
         mat3 = (temp | (temp >> 1) | (temp << 1)) & MASK;
-        temp = ((state >> 1) | (state << 255));
+        temp = ((state >> 1) | (state << (NUM_CELLS-1)));
         mat3 |= ((temp | (temp >> 1) | (temp << 1)) & MASK) << 1;
-        temp = ((state << 1) | (state >> 255));
+        temp = ((state << 1) | (state >> (NUM_CELLS-1)));
         mat3 |= ((temp | (temp >> 1) | (temp << 1)) & MASK) >> 1;
-        temp = ((state << 2) | (state >> 254));
-        mat3 |= ((temp | (temp >> 1) | (temp << 1)) & MASK) >> 2;
 
         /* Any match to patterns 111, 100, 000, will have a 0 bit in mat1,
          * mat2, or mat3, respectively in that cell position. Otherwise, that
