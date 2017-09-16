@@ -17,12 +17,18 @@ module.exports = async function(deployer, network) {
 
   var factoryInstance = await Rule110Factory.deployed();
 
+  var totalGasUsed = 0;
+
   for (let game of initialGames) {
     var result = await factoryInstance.newRule110(game.size, game.initialCells, game.description);
+    totalGasUsed += result.receipt.gasUsed;
 
     var gameInstance = await Rule110.at(result.logs[0].args.game);
     for (i = 0; i < game.evolutions; i++) {
         var result = await gameInstance.evolve();
+        totalGasUsed += result.receipt.gasUsed;
     }
   }
+
+  console.log("[Gas Usage] Creating initial games used " + totalGasUsed + " total gas.");
 }
