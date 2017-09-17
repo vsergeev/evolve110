@@ -21,12 +21,15 @@ var Model = function (web3) {
   this.web3 = web3;
   this.FactoryContract = null;
   this.GameContract = null;
+
+  /* Configuration constants */
   this.defaultGasPrice = null;
   this.tipAddress = null;
 
   /* State */
   this.factoryInstance = null;
   this.gameInstance = null;
+  this.version = null;
   this.gameList = [];
   this.activeGame = {address: null, size: null, description: null, cells: null};
 
@@ -53,21 +56,36 @@ Model.prototype = {
       var isConnected = self.web3.isConnected();
       var hasWallet = web3.eth.defaultAccount != undefined;
 
+      /* Check if this network si supported */
       if (config.networks[network_id] == undefined) {
         console.log('[Model] Not deployed on network id ' + network_id);
-
-        self.connectedCallback(network_id, null, isConnected, hasWallet);
-      } else {
-        console.log('[Model] Loading model for network id ' + network_id);
-
-        self.tipAddress = config.networks[network_id].tipAddress;
-        self.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[network_id].defaultGasPrice, "gwei"));
-        self.factoryInstance = self.FactoryContract.at(config.networks[network_id].factoryAddress);
-
-        self.connectedCallback(network_id, self.factoryInstance.address, isConnected, hasWallet);
-
-        self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'}, self.handleGameCreatedEvent.bind(self));
+        self.connectedCallback(network_id, null, null, isConnected, hasWallet);
+        return;
       }
+
+      console.log('[Model] Loading model for network id ' + network_id);
+
+      /* Look up configuration constants */
+      self.tipAddress = config.networks[network_id].tipAddress;
+      self.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[network_id].defaultGasPrice, "gwei"));
+
+      /* Create factory instance */
+      self.factoryInstance = self.FactoryContract.at(config.networks[network_id].factoryAddress);
+
+      /* Look up factory version */
+      self.factoryInstance.VERSION(function (error, version) {
+        if (error) {
+          self.connectedCallback(network_id, null, null, isConnected, hasWallet);
+        } else {
+          /* Save factory version */
+          self.version = version;
+
+          self.connectedCallback(network_id, version, self.factoryInstance.address, isConnected, hasWallet);
+
+          /* Create event watcher for game created */
+          self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'}, self.handleGameCreatedEvent.bind(self));
+        }
+      });
     });
   },
 
@@ -179,7 +197,7 @@ var NETWORK_BLOCK_EXPLORER = {
 var View = function () {
   /* State */
   this.gameSelectedElement = null;
-  this.networkState = {id: null, factoryAddress: null, isConnected: false, hasWallet: false};
+  this.networkState = {id: null, factoryVersion: null, factoryAddress: null, isConnected: false, hasWallet: false};
 
   /* Callbacks */
   this.buttonGameSelectCallback = null;
@@ -213,8 +231,9 @@ View.prototype = {
 
   /* Event update handlers */
 
-  handleConnectedEvent: function (networkId, factoryAddress, isConnected, hasWallet) {
+  handleConnectedEvent: function (networkId, factoryVersion, factoryAddress, isConnected, hasWallet) {
     this.networkState.id = networkId;
+    this.networkState.factoryVersion = factoryVersion;
     this.networkState.factoryAddress = factoryAddress;
     this.networkState.isConnected = isConnected;
     this.networkState.hasWallet = hasWallet;
@@ -224,13 +243,13 @@ View.prototype = {
     $('#status-bar-network').append($('<b></b>').addClass('text-info').text(networkName));
 
 
-    /* Update factory address in status bar */
-    if (factoryAddress) {
+    /* Update factory version in status bar */
+    if (factoryVersion) {
       $('#status-bar-game-factory').append($('<b></b>')
                                            .addClass('text-info')
                                            .append(this.formatAddressLink(
                                               factoryAddress,
-                                              factoryAddress.substring(0, 6) + "...",
+                                              "v" + factoryVersion,
                                               true)));
     } else {
       $('#status-bar-game-factory').append($('<b></b>').addClass('text-danger').text("Not Deployed"));
