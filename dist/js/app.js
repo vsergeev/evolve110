@@ -2,9 +2,14 @@
 /* Helper Functions */
 /******************************************************************************/
 
-function toBitString(bigNumber) {
+function toBitString(size, bigNumber) {
   var s = bigNumber.toString(2);
-  return "0".repeat(256-s.length) + s;
+  if (s.length < size) {
+    s = "0".repeat(size-s.length) + s;
+  } else if (s.length > size) {
+    s = s.substring(s.length-size);
+  }
+  return s;
 }
 
 /******************************************************************************/
@@ -23,7 +28,7 @@ var Model = function (web3) {
   this.factoryInstance = null;
   this.gameInstance = null;
   this.gameList = [];
-  this.activeGame = {address: null, description: null, cells: null};
+  this.activeGame = {address: null, size: null, description: null, cells: null};
 
   /* Blockchain event watchers */
   this.gameCreatedEvent = null;
@@ -73,17 +78,18 @@ Model.prototype = {
       console.error(error);
     } else {
       var address = result.args.game;
+      var size = result.args.size;
       var description = this.web3.toUtf8(result.args.description);
 
-      console.log("[Model] Game created at " + address + " with description " + description);
+      console.log("[Model] Game created at " + address + ", with size " + size + ", and description " + description);
 
       var index = this.gameList.length;
 
       /* Save it to our list */
-      this.gameList.push({address: address, description: description});
+      this.gameList.push({address: address, size: size, description: description});
 
       /* Notify our callback */
-      this.gameAddedCallback(index, address, description);
+      this.gameAddedCallback(index, address, size, description);
     }
   },
 
@@ -91,7 +97,7 @@ Model.prototype = {
     if (error) {
       console.error(error);
     } else {
-      var cells = toBitString(result.args.cells);
+      var cells = toBitString(this.activeGame.size, result.args.cells);
       var txid = result.transactionHash;
 
       this.activeGame.cells.push(cells);
@@ -108,9 +114,10 @@ Model.prototype = {
   selectGame: function (index, callback) {
     /* Look up by game by index */
     var address = this.gameList[index].address;
+    var size = this.gameList[index].size;
     var description = this.gameList[index].description;
 
-    console.log("[Model] Selecting game at address " + address + ", with description " + description);
+    console.log("[Model] Selecting game at address " + address + ", with size " + size + ", and description " + description);
 
     /* Form contract instance */
     this.gameInstance = this.GameContract.at(address);
@@ -118,6 +125,7 @@ Model.prototype = {
     /* Save active game information */
     this.activeGame.address = address;
     this.activeGame.description = description;
+    this.activeGame.size = size;
     this.activeGame.cells = [];
 
     /* Cancel existing watch handler */
@@ -128,7 +136,7 @@ Model.prototype = {
     this.gameStateUpdatedEvent = this.gameInstance.GameStateUpdated(null, {fromBlock: 0, toBlock: 'latest'}, this.handleGameStateUpdatedEvent.bind(this));
 
     /* Notify our callback */
-    callback({address: address, description: description});
+    callback({address: address, size: size, description: description});
   },
 
   evolveGame: function (callback) {
@@ -138,11 +146,11 @@ Model.prototype = {
       this.gameInstance.evolve({gasPrice: this.defaultGasPrice}, callback);
   },
 
-  createGame: function (initialCells, description, callback) {
+  createGame: function (size, initialCells, description, callback) {
     if (!this.factoryInstance)
       callback("Factory instance not found.", null);
     else
-      this.factoryInstance.newRule110(initialCells, description, {gasPrice: this.defaultGasPrice}, callback);
+      this.factoryInstance.newRule110(size, initialCells, description, {gasPrice: this.defaultGasPrice}, callback);
   },
 
   tip: function (amount, callback) {
@@ -189,6 +197,7 @@ View.prototype = {
 
     /* Bind create inputs */
     $('#create-initial-cells').on('input', this.handleCreateInputsChange.bind(this));
+    $('#create-size').on('input', this.handleCreateInputsChange.bind(this));
 
     /* Update create initial board */
     this.handleCreateInputsChange();
@@ -241,8 +250,8 @@ View.prototype = {
       $('#create-button').prop('disabled', false);
   },
 
-  handleGameAddedEvent: function (index, address, description) {
-    console.log("[View] Adding game with address " + address + " and description " + description);
+  handleGameAddedEvent: function (index, address, size, description) {
+    console.log("[View] Adding game with address " + address + ", size " + size + ", and description " + description);
 
     /* Create row for game list */
     var elem = $('<tr></tr>')
@@ -252,6 +261,8 @@ View.prototype = {
                     .attr('href', '#')
                     .text(address)
                     .click(this.handleButtonGameSelect.bind(this, index))))
+                .append($('<td></td>')
+                    .text(size))
                 .append($('<td></td>')
                     .text(description));
 
@@ -284,10 +295,9 @@ View.prototype = {
     /* Disable evolve button until game is loaded */
     $('#evolve-button').prop('disabled', true);
 
-    /* Clear game address */
+    /* Clear game information */
     $('#game-address').text("");
-
-    /* Clear game description */
+    $('#game-size').text("");
     $('#game-description').text("");
 
     /* Clear game board */
@@ -311,10 +321,9 @@ View.prototype = {
       if (self.networkState.isConnected && self.networkState.hasWallet)
         $('#evolve-button').prop('disabled', false);
 
-      /* Update game address */
+      /* Update game information */
       $('#game-address').append(self.formatAddressLink(result.address, result.address, true));
-
-      /* Update game description */
+      $('#game-size').text(result.size);
       $('#game-description').text(result.description);
     });
   },
@@ -345,25 +354,45 @@ View.prototype = {
     console.log("[View] Create button clicked");
 
     var initialCells = $('#create-initial-cells').val();
+    var size = $('#create-size').val();
     var description = $('#create-description').val();
 
     /* Validate cells are a number */
     try {
       initialCells = web3.toBigNumber(initialCells);
     } catch (err) {
-      this.showResultModal(false, "Error", "Game initial cells is not a number.");
+      this.showResultModal(false, "Error", "Invalid game initial cells: initial cells must be a number.");
+      return;
+    }
+
+    /* Validate size is a number */
+    size = Number(size);
+    if (isNaN(size)) {
+      this.showResultModal(false, "Error", "Invalid game size: game size must be a number.");
+      return;
+    }
+
+    /* Validate number of cells is in range */
+    if (size < 3 || size > 256) {
+      this.showResultModal(false, "Error", "Invalid game size: size is out of range, min is 3, max is 256.");
+      return;
+    }
+
+    /* Validate initial cells are in range */
+    if (initialCells.greaterThan(web3.toBigNumber(2).pow(size).minus(1))) {
+      this.showResultModal(false, "Error", "Invalid game initial cells: greater than game size.");
       return;
     }
 
     /* Validate description is 32 chars or less */
     if (description.length > 32) {
-      this.showResultModal(false, "Error", "Game description is too long: got " + description.length + " characters, max is 32.");
+      this.showResultModal(false, "Error", "Invalid game description: length is too long, got " + description.length + " characters, max is 32.");
       return;
     }
 
     var self = this;
 
-    this.buttonCreateCallback(initialCells, description, function (error, txid) {
+    this.buttonCreateCallback(size, initialCells, description, function (error, txid) {
       if (error) {
         console.log("[View] Create failed");
         console.error(error);
@@ -416,9 +445,10 @@ View.prototype = {
 
   handleCreateInputsChange: function () {
     var initialCells = $('#create-initial-cells').val();
+    var size = $('#create-size').val();
 
     try {
-      initialCells = toBitString(web3.toBigNumber(initialCells));
+      initialCells = toBitString(Number(size), web3.toBigNumber(initialCells));
 
       /* Replace bit strings with spaces / unicode blocks */
       initialCells = initialCells.replace(/0/g, " ");
