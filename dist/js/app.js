@@ -253,7 +253,7 @@ View.prototype = {
                                    true)));
     } else {
       $('#status-bar-version').append($('<b></b>').addClass('text-danger').text("Not Deployed"));
-      this.showResultModal(false, "Unsupported network", "This DApp has not been deployed to this network.<br>Please try mainnet or a testnet network.");
+      this.showResultModal(false, "Unsupported network", "This Ðapp has not been deployed to this network.<br><br>Please try mainnet or a testnet network.");
     }
 
     /* Update wallet status in status bar */
