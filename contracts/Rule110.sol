@@ -87,6 +87,8 @@ contract Rule110 {
 contract Rule110Factory {
     event GameCreated(address game, uint16 size, bytes32 description);
 
+    string constant public VERSION = "1.0.0";
+
     function newRule110(uint16 size, uint256 initialCells, bytes32 description) {
         GameCreated(new Rule110(size, initialCells), size, description);
     }
