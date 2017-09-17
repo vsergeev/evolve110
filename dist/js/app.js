@@ -199,6 +199,14 @@ View.prototype = {
     $('#create-initial-cells').on('input', this.handleCreateInputsChange.bind(this));
     $('#create-size').on('input', this.handleCreateInputsChange.bind(this));
 
+    /* Generate random 256 initial cells for create game */
+    var s = "0x";
+    for (var i = 0; i < 64; i++)
+        s = s + Math.floor(16*Math.random()).toString("16");
+    $('#create-initial-cells').val(s);
+    $('#create-size').val("256");
+    $('#create-description').val("random");
+
     /* Update create initial board */
     this.handleCreateInputsChange();
   },
