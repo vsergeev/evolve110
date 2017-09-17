@@ -594,7 +594,7 @@ App = {
 };
 
 $(function () {
-  $(window).ready(function () {
+  $(window).on('load', function () {
     App.init();
   });
 });
