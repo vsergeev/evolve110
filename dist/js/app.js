@@ -474,7 +474,7 @@ View.prototype = {
 
       /* Replace bit strings with spaces / unicode blocks */
       initialCells = initialCells.replace(/0/g, " ");
-      initialCells = initialCells.replace(/1/g, "■");
+      initialCells = initialCells.replace(/1/g, "█");
 
       /* Add to game create board */
       $('#game-create .board').html($('<span></span>')
