@@ -223,11 +223,6 @@ View.prototype = {
     var networkName = NETWORK_NAME[networkId] || "Unknown";
     $('#status-bar-network').append($('<b></b>').addClass('text-info').text(networkName));
 
-    /* Update connected status in status bar */
-    if (isConnected)
-      $('#status-bar-connected').append($('<b></b>').addClass('text-info').text("True"));
-    else
-      $('#status-bar-connected').append($('<b></b>').addClass('text-danger').text("False"));
 
     /* Update factory address in status bar */
     if (factoryAddress) {
