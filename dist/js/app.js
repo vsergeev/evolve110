@@ -243,16 +243,16 @@ View.prototype = {
     $('#status-bar-network').append($('<b></b>').addClass('text-info').text(networkName));
 
 
-    /* Update factory version in status bar */
+    /* Update version in status bar */
     if (factoryVersion) {
-      $('#status-bar-game-factory').append($('<b></b>')
-                                           .addClass('text-info')
-                                           .append(this.formatAddressLink(
-                                              factoryAddress,
-                                              "v" + factoryVersion,
-                                              true)));
+      $('#status-bar-version').append($('<b></b>')
+                                .addClass('text-info')
+                                .append(this.formatAddressLink(
+                                   factoryAddress,
+                                   "v" + factoryVersion,
+                                   true)));
     } else {
-      $('#status-bar-game-factory').append($('<b></b>').addClass('text-danger').text("Not Deployed"));
+      $('#status-bar-version').append($('<b></b>').addClass('text-danger').text("Not Deployed"));
       this.showResultModal(false, "Unsupported network", "This DApp has not been deployed to this network.<br>Please try mainnet or a testnet network.");
     }
 
