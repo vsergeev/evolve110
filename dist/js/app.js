@@ -58,12 +58,12 @@ Model.prototype = {
 
       /* Check if this network si supported */
       if (config.networks[network_id] == undefined) {
-        console.log('[Model] Not deployed on network id ' + network_id);
+        Logger.log('[Model] Not deployed on network id ' + network_id);
         self.connectedCallback(network_id, null, null, isConnected, hasWallet);
         return;
       }
 
-      console.log('[Model] Loading model for network id ' + network_id);
+      Logger.log('[Model] Loading model for network id ' + network_id);
 
       /* Look up configuration constants */
       self.tipAddress = config.networks[network_id].tipAddress;
@@ -93,13 +93,13 @@ Model.prototype = {
 
   handleGameCreatedEvent: function (error, result) {
     if (error) {
-      console.error(error);
+      Logger.error(error);
     } else {
       var address = result.args.game;
       var size = result.args.size;
       var description = this.web3.toUtf8(result.args.description);
 
-      console.log("[Model] Game created at " + address + ", with size " + size + ", and description " + description);
+      Logger.log("[Model] Game created at " + address + ", with size " + size + ", and description " + description);
 
       var index = this.gameList.length;
 
@@ -113,14 +113,14 @@ Model.prototype = {
 
   handleGameStateUpdatedEvent: function (error, result) {
     if (error) {
-      console.error(error);
+      Logger.error(error);
     } else {
       var cells = toBitString(this.activeGame.size, result.args.cells);
       var txid = result.transactionHash;
 
       this.activeGame.cells.push(cells);
 
-      console.log("[Model] Game state updated with cells " + cells + " from txid " + txid);
+      Logger.log("[Model] Game state updated with cells " + cells + " from txid " + txid);
 
       /* Notify our callback */
       this.gameStateUpdatedCallback(cells, txid);
@@ -135,7 +135,7 @@ Model.prototype = {
     var size = this.gameList[index].size;
     var description = this.gameList[index].description;
 
-    console.log("[Model] Selecting game at address " + address + ", with size " + size + ", and description " + description);
+    Logger.log("[Model] Selecting game at address " + address + ", with size " + size + ", and description " + description);
 
     /* Form contract instance */
     this.gameInstance = this.GameContract.at(address);
@@ -275,7 +275,7 @@ View.prototype = {
   },
 
   handleGameAddedEvent: function (index, address, size, description) {
-    console.log("[View] Adding game with address " + address + ", size " + size + ", and description " + description);
+    Logger.log("[View] Adding game with address " + address + ", size " + size + ", and description " + description);
 
     /* Create row for game list */
     var elem = $('<tr></tr>')
@@ -299,7 +299,7 @@ View.prototype = {
   },
 
   handleGameStateUpdatedEvent: function (cells, txid) {
-    console.log("[View] Updating game cells");
+    Logger.log("[View] Updating game cells");
 
     /* Replace bit strings with spaces / unicode blocks */
     cells = cells.replace(/0/g, " ");
@@ -314,7 +314,7 @@ View.prototype = {
   /* Button handlers */
 
   handleButtonGameSelect: function (index) {
-    console.log("[View] Game select button clicked, index " + index);
+    Logger.log("[View] Game select button clicked, index " + index);
 
     /* Disable evolve button until game is loaded */
     $('#evolve-button').prop('disabled', true);
@@ -330,7 +330,7 @@ View.prototype = {
     var self = this;
 
     this.buttonGameSelectCallback(index, function (result) {
-      console.log("[View] Game select, index " + index);
+      Logger.log("[View] Game select, index " + index);
 
       /* Update active element in game list */
       if (self.gameSelectedElement)
@@ -353,19 +353,19 @@ View.prototype = {
   },
 
   handleButtonEvolve: function () {
-    console.log("[View] Evolve button clicked");
+    Logger.log("[View] Evolve button clicked");
 
     var self = this;
 
     this.buttonEvolveCallback(function (error, txid) {
       if (error) {
-        console.log("[View] Evolve failed");
-        console.error(error);
+        Logger.log("[View] Evolve failed");
+        Logger.error(error);
 
         var msg = $("<span></span>").text(error.message.split('\n')[0]);
         self.showResultModal(false, "Evolve failed", msg);
       } else {
-        console.log("[View] Evolve succeeded, txid " + txid);
+        Logger.log("[View] Evolve succeeded, txid " + txid);
 
         var msg = $("<span></span>").text("Transaction ID: ")
                                     .append(self.formatTxidLink(txid, txid, true));
@@ -375,7 +375,7 @@ View.prototype = {
   },
 
   handleButtonCreate: function () {
-    console.log("[View] Create button clicked");
+    Logger.log("[View] Create button clicked");
 
     var initialCells = $('#create-initial-cells').val();
     var size = $('#create-size').val();
@@ -418,13 +418,13 @@ View.prototype = {
 
     this.buttonCreateCallback(size, initialCells, description, function (error, txid) {
       if (error) {
-        console.log("[View] Create failed");
-        console.error(error);
+        Logger.log("[View] Create failed");
+        Logger.error(error);
 
         var msg = $("<span></span>").text(error.message.split('\n')[0]);
         self.showResultModal(false, "Create game failed", msg);
       } else {
-        console.log("[View] Create succeeded, txid " + txid);
+        Logger.log("[View] Create succeeded, txid " + txid);
 
         /* FIXME get new game address */
 
@@ -436,7 +436,7 @@ View.prototype = {
   },
 
   handleButtonTip: function () {
-    console.log("[View] Tip button clicked");
+    Logger.log("[View] Tip button clicked");
 
     var amount = $('#tip-amount').val();
 
@@ -450,13 +450,13 @@ View.prototype = {
 
     this.buttonTipCallback(amount, function (error, txid) {
       if (error) {
-        console.log("[View] Tip failed");
-        console.error(error);
+        Logger.log("[View] Tip failed");
+        Logger.error(error);
 
         var msg = $("<span></span>").text(error.message.split('\n')[0]);
         self.showResultModal(false, "Tip failed", msg);
       } else {
-        console.log("[View] Tip succeeded, txid " + txid);
+        Logger.log("[View] Tip succeeded, txid " + txid);
 
         var msg = $("<span></span>").text("Transaction ID: ")
                                     .append(self.formatTxidLink(txid, txid, true));
@@ -574,6 +574,19 @@ Controller.prototype = {
 /******************************************************************************/
 /* Top-level */
 /******************************************************************************/
+
+Logger = {
+  enabled: false,
+
+  log: function (s) {
+    if (Logger.enabled && console)
+      console.log(s);
+  },
+
+  error: function (s) {
+    console.error(s);
+  },
+};
 
 App = {
   model: null,
