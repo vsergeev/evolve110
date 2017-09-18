@@ -18,8 +18,8 @@ hr {
 }
 
 .mono {
-  font-family: monospace;
-  font-size: 1.2rem;
+  font-family: monospace, monospace;
+  font-size: 1.0rem;
 }
 
 .icon-link-ext {
@@ -55,7 +55,7 @@ hr {
 }
 
 #game .board span {
-  font-family: monospace;
+  font-family: monospace, monospace;
   white-space: pre;
 }
 
@@ -89,7 +89,7 @@ hr {
 }
 
 #game-create .board span {
-  font-family: monospace;
+  font-family: monospace, monospace;
   white-space: pre;
 }
 
