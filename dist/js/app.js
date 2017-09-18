@@ -239,9 +239,8 @@ View.prototype = {
     this.networkState.hasWallet = hasWallet;
 
     /* Update network name in status bar */
-    var networkName = NETWORK_NAME[networkId] || "Unknown";
+    var networkName = NETWORK_NAME[networkId] || ("Unknown (" + networkId + ")");
     $('#status-bar-network').append($('<b></b>').addClass('text-info').text(networkName));
-
 
     /* Update version in status bar */
     if (factoryVersion) {
