@@ -3,6 +3,11 @@ body {
   padding-bottom: 1.5rem;
 }
 
+.container {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
 h3 {
   margin-top: 1rem;
   margin-bottom: 1rem;
@@ -39,6 +44,22 @@ hr {
   min-width: 10rem;
 }
 
+#game table th {
+  padding-right: 0.75rem;
+}
+
+#game .col-no-ellipsis {
+  width: 1px;
+  white-space: nowrap;
+}
+
+#game table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 1px;
+}
+
 #game .board {
   font-size: 0.35vw;
   line-height: 1;
@@ -61,6 +82,29 @@ hr {
 
 #game .borderless td, .borderless th {
   border: none;
+}
+
+/******************************************************************************/
+
+#game-list table {
+  table-layout: auto;
+}
+
+#game-list .col-ellipsis {
+  max-width: 1px;
+  white-space: nowrap;
+}
+
+#game-list .col-no-ellipsis {
+  width: 1px;
+  white-space: nowrap;
+}
+
+#game-list table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 1px;
 }
 
 /******************************************************************************/
@@ -147,6 +191,7 @@ hr {
 }
 
 #status-bar table {
+  table-layout: fixed;
   font-size: 0.8rem;
   color: white;
   width: 100%;
@@ -155,4 +200,7 @@ hr {
 #status-bar table td {
   width: 33.3%;
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

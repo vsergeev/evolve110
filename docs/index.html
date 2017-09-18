@@ -9,29 +9,31 @@
   </head>
   <body>
   <div class="container">
+
     <div class="row">
       <h1>Rule 110</h1>
     </div>
     <div class="row">
       <p id="description"><a href="https://en.wikipedia.org/wiki/Rule_110" target="_blank">Rule 110</a> is one of the simplest Turing-complete cellular automata. This implementation lives on the Ethereum blockchain. Use a browser wallet like <a href="https://metamask.io/" target="_blank">MetaMask</a>, <a href="https://parity.io/parity.html" target="_blank">Parity</a>, or <a href="https://github.com/ethereum/mist" target="_blank">Mist</a> to evolve an existing game or to create a new one. See the project on <a href="https://github.com/vsergeev/evolve110" target="_blank">GitHub</a> for more information.</p>
     </div>
+
     <div class="row">
       <h3>Game</h3>
     </div>
     <div id="game">
       <table class="table table-condensed table-sm borderless">
         <tbody>
-          <tr class="row">
-            <th class="col-md-2">Address</th>
-            <td class="col-md-10 mono" id="game-address"></td>
+          <tr>
+            <th class="col-no-ellipsis" >Address</th>
+            <td class="mono" id="game-address"></td>
           </tr>
-          <tr class="row">
-            <th class="col-md-2">Size</th>
-            <td class="col-md-10" id="game-size"></td>
+          <tr>
+            <th class="col-no-ellipsis">Size</th>
+            <td id="game-size"></td>
           </tr>
-          <tr class="row">
-            <th class="col-md-2">Description</th>
-            <td class="col-md-10" id="game-description"></td>
+          <tr>
+            <th class="col-no-ellipsis">Description</th>
+            <td id="game-description"></td>
           </tr>
         </tbody>
       </table>
@@ -50,9 +52,9 @@
       <table class="table borderless">
         <thead>
           <tr>
-            <th>Address</th>
-            <th>Size</th>
-            <th>Description</th>
+            <th class="col-ellipsis">Address</th>
+            <th class="col-no-ellipsis">Size</th>
+            <th class="col-ellipsis">Description</th>
           </tr>
         </thead>
         <tbody>
