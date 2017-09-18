@@ -225,6 +225,9 @@ View.prototype = {
     $('#create-size').val("256");
     $('#create-description').val("random");
 
+    /* Set default tip amount to 0.003 ETH */
+    $('#tip-amount').val("0.003");
+
     /* Update create initial board */
     this.handleCreateInputsChange();
   },
