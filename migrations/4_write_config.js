@@ -5,7 +5,7 @@ var fs = require("fs");
 var path = require("path");
 
 module.exports = function(deployer, network) {
-  var configPath = path.join(deployer.basePath, '..', 'dist', 'config.json');
+  var configPath = path.join(deployer.basePath, '..', 'docs', 'config.json');
 
   var Rule110FactoryInfo = Rule110Factory.toJSON();
   var Rule110Info = Rule110.toJSON();
