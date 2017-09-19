@@ -1,2 +1,4 @@
 build/
 py/*.png
+node_modules/
+package-lock.json
