@@ -413,7 +413,7 @@ View.prototype = {
 
     /* Validate number of cells is in range */
     if (size < 3 || size > 256) {
-      this.showResultModal(false, "Error", "Invalid game size: size is out of range, min is 3, max is 256.");
+      this.showResultModal(false, "Error", "Invalid game size: size is out of range, got " + size + ", min is 3, max is 256.");
       return;
     }
 
@@ -456,7 +456,7 @@ View.prototype = {
 
     /* Validate amount is a number */
     if (isNaN(amount)) {
-      this.showResultModal(false, "Error", "Tip amount is not a number.");
+      this.showResultModal(false, "Error", "Invalid tip amount: tip amount must be a number.");
       return;
     }
 
