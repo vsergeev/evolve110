@@ -19,15 +19,19 @@ module.exports = function(deployer, network) {
   };
 
   var tipAddresses = {
-    1:    "0x0",
-    2:    "0x0",
+    1:    "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
+    3:    "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
+    4:    "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
+    42:   "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
     1234: "0xecf0744f2f71a16b831125d6cffafd6095617adf",
   }
+
+  /* evolve() gas cost: (42438 gas * 4 gwei)/(1000000000 gwei/ETH) = 0.0001697520 ETH */
 
   for (var network in Rule110FactoryInfo.networks) {
     config.networks[network] = {
       factoryAddress: Rule110FactoryInfo.networks[network].address,
-      defaultGasPrice: 4,
+      defaultGasPrice: "4",
       tipAddress: tipAddresses[network],
       defaultTipAmount: "0.003",
     }
