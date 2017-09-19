@@ -210,10 +210,12 @@ var NETWORK_BLOCK_EXPLORER = {
 };
 
 var View = function () {
-  /* State */
-  this.gameSelectedElement = null;
+  /* Configuration and network status */
   this.config = {};
   this.networkStatus = {};
+
+  /* State */
+  this.gameListHighlightedElement = null;
 
   /* Callbacks */
   this.buttonGameSelectCallback = null;
@@ -224,12 +226,12 @@ var View = function () {
 
 View.prototype = {
   init: function () {
-    /* Bind buttons */
+    /* Bind buttons to handlers */
     $('#evolve-button').click(this.handleButtonEvolve.bind(this));
     $('#create-button').click(this.handleButtonCreate.bind(this));
     $('#tip-button').click(this.handleButtonTip.bind(this));
 
-    /* Bind create inputs */
+    /* Bind create inputs to handler */
     $('#create-initial-cells').on('input', this.handleCreateInputsChange.bind(this));
     $('#create-size').on('input', this.handleCreateInputsChange.bind(this));
 
@@ -241,7 +243,7 @@ View.prototype = {
     $('#create-size').val("256");
     $('#create-description').val("random");
 
-    /* Update create initial board */
+    /* Update create game initial board */
     this.handleCreateInputsChange();
   },
 
@@ -306,7 +308,7 @@ View.prototype = {
     $('#game-list').find("tbody").first().append(elem);
 
     /* Select first game, if a game hasn't been selected yet */
-    if (this.gameSelectedElement == null)
+    if (this.gameListHighlightedElement == null)
       this.handleButtonGameSelect(0);
   },
 
@@ -345,13 +347,13 @@ View.prototype = {
       Logger.log("[View] Game select, index " + index);
 
       /* Update active element in game list */
-      if (self.gameSelectedElement)
-        self.gameSelectedElement.removeClass('table-info');
+      if (self.gameListHighlightedElement)
+        self.gameListHighlightedElement.removeClass('table-info');
 
-      self.gameSelectedElement = $('#game-list').find("tbody")
-                                                .find("tr")
-                                                .eq(index)
-                                                .addClass('table-info');
+      self.gameListHighlightedElement = $('#game-list').find("tbody")
+                                                       .find("tr")
+                                                       .eq(index)
+                                                       .addClass('table-info');
 
       /* Enable evolve button if connected and user has wallet */
       if (self.networkStatus.isConnected && self.networkStatus.hasWallet)
@@ -389,6 +391,7 @@ View.prototype = {
   handleButtonCreate: function () {
     Logger.log("[View] Create button clicked");
 
+    /* Look up form inputs */
     var initialCells = $('#create-initial-cells').val();
     var size = $('#create-size').val();
     var description = $('#create-description').val();
@@ -438,8 +441,6 @@ View.prototype = {
       } else {
         Logger.log("[View] Create succeeded, txid " + txid);
 
-        /* FIXME get new game address */
-
         var msg = $("<span></span>").text("Transaction ID: ")
                                     .append(self.formatTxidLink(txid, txid, true));
         self.showResultModal(true, "Create game succeeded", msg);
@@ -450,6 +451,7 @@ View.prototype = {
   handleButtonTip: function () {
     Logger.log("[View] Tip button clicked");
 
+    /* Look up form input */
     var amount = $('#tip-amount').val();
 
     /* Validate amount is a number */
@@ -480,20 +482,22 @@ View.prototype = {
   /* From input handlers */
 
   handleCreateInputsChange: function () {
+    /* Look up form inputs */
     var initialCells = $('#create-initial-cells').val();
     var size = $('#create-size').val();
 
     try {
+      /* Convert initial cells from number to bit string */
       initialCells = toBitString(Number(size), web3.toBigNumber(initialCells));
 
       /* Replace bit strings with spaces / unicode blocks */
       initialCells = initialCells.replace(/0/g, " ");
       initialCells = initialCells.replace(/1/g, "█");
 
-      /* Add to game create board */
-      $('#game-create .board').html($('<span></span>')
-                                     .text(initialCells));
-    } catch (err) { }
+      /* Update game create board */
+      $('#game-create .board').html($('<span></span>').text(initialCells));
+    } catch (err) {
+    }
   },
 
   /* Success/failure Modal */
@@ -516,7 +520,7 @@ View.prototype = {
 
   /* Helper functions to format block explorer links */
 
-  formatTxidLink: function (txid, text, addIcon) {
+  formatTxidLink: function (txid, text, showLinkIcon) {
     var baseUrl = NETWORK_BLOCK_EXPLORER[this.networkStatus.networkId];
 
     if (baseUrl) {
@@ -525,7 +529,7 @@ View.prototype = {
                  .attr('target', '_blank')
                  .text(text);
 
-      if (addIcon)
+      if (showLinkIcon)
         elem = elem.append($('<i></i>').addClass('icon-link-ext'));
 
       return elem;
@@ -534,7 +538,7 @@ View.prototype = {
     }
   },
 
-  formatAddressLink: function (address, text, addIcon) {
+  formatAddressLink: function (address, text, showLinkIcon) {
     var baseUrl = NETWORK_BLOCK_EXPLORER[this.networkStatus.networkId];
 
     if (baseUrl) {
@@ -543,7 +547,7 @@ View.prototype = {
                  .attr('target', '_blank')
                  .text(text);
 
-      if (addIcon)
+      if (showLinkIcon)
         elem = elem.append($('<i></i>').addClass('icon-link-ext'));
 
       return elem;
