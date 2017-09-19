@@ -23,7 +23,7 @@ var Model = function (web3) {
   this.GameContract = null;
 
   /* Configuration and network status */
-  this.config = {defaultGasPrice: null, tipAddress: null, factoryAddress: null};
+  this.config = {defaultGasPrice: null, tipAddress: null, defaultTipAmount: null, factoryAddress: null};
   this.networkStatus = {factoryVersion: null, networkId: null, isConnected: false, hasWallet: false};
 
   /* State */
@@ -66,6 +66,7 @@ Model.prototype = {
 
         /* Look up configuration constants */
         self.config.tipAddress = config.networks[networkId].tipAddress;
+        self.config.defaultTipAmount = config.networks[networkId].defaultTipAmount;
         self.config.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[networkId].defaultGasPrice, "gwei"));
         self.config.factoryAddress = config.networks[networkId].factoryAddress;
 
@@ -240,9 +241,6 @@ View.prototype = {
     $('#create-size').val("256");
     $('#create-description').val("random");
 
-    /* Set default tip amount to 0.003 ETH */
-    $('#tip-amount').val("0.003");
-
     /* Update create initial board */
     this.handleCreateInputsChange();
   },
@@ -278,8 +276,10 @@ View.prototype = {
       $('#status-bar-wallet').append($('<b></b>').addClass('text-danger').text("False"));
 
     /* Enable tip button if connected and user has wallet */
-    if (networkStatus.isConnected && networkStatus.hasWallet)
+    if (networkStatus.isConnected && networkStatus.hasWallet) {
+      $('#tip-amount').val(config.defaultTipAmount);
       $('#tip-button').prop('disabled', false);
+    }
 
     /* Enable create button if connected, deployed, and user has wallet */
     if (networkStatus.isConnected && networkStatus.factoryVersion && networkStatus.hasWallet)
