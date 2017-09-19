@@ -29,6 +29,7 @@ module.exports = function(deployer, network) {
       factoryAddress: Rule110FactoryInfo.networks[network].address,
       defaultGasPrice: 4,
       tipAddress: tipAddresses[network],
+      defaultTipAmount: "0.003",
     }
   }
 
