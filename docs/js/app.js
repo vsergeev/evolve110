@@ -22,14 +22,13 @@ var Model = function (web3) {
   this.FactoryContract = null;
   this.GameContract = null;
 
-  /* Configuration constants */
-  this.defaultGasPrice = null;
-  this.tipAddress = null;
+  /* Configuration and network status */
+  this.config = {defaultGasPrice: null, tipAddress: null, factoryAddress: null};
+  this.networkStatus = {factoryVersion: null, networkId: null, isConnected: false, hasWallet: false};
 
   /* State */
   this.factoryInstance = null;
   this.gameInstance = null;
-  this.version = null;
   this.gameList = [];
   this.activeGame = {address: null, size: null, description: null, cells: null};
 
@@ -48,42 +47,57 @@ Model.prototype = {
     var self = this;
 
     $.getJSON('config.json', function (config) {
-      var network_id = self.web3.version.network;
-
+      /* Create contract classes */
       self.GameContract = self.web3.eth.contract(config.contracts.Rule110);
       self.FactoryContract = self.web3.eth.contract(config.contracts.Rule110Factory);
 
-      var isConnected = self.web3.isConnected();
-      var hasWallet = web3.eth.defaultAccount != undefined;
+      /* Assess network status */
+      self.networkStatus.networkId = self.web3.version.network;
+      self.networkStatus.isConnected = self.web3.isConnected();
+      self.networkStatus.hasWallet = web3.eth.defaultAccount != undefined;
 
-      /* Check if this network si supported */
-      if (config.networks[network_id] == undefined) {
-        Logger.log('[Model] Not deployed on network id ' + network_id);
-        self.connectedCallback(network_id, null, null, isConnected, hasWallet);
+      var networkId = self.networkStatus.networkId;
+
+      /* Check if this network is supported */
+      if (config.networks[networkId] == undefined) {
+        Logger.log('[Model] Not deployed on network id ' + networkId);
+      } else {
+        Logger.log('[Model] Loading model for network id ' + networkId);
+
+        /* Look up configuration constants */
+        self.config.tipAddress = config.networks[networkId].tipAddress;
+        self.config.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[networkId].defaultGasPrice, "gwei"));
+        self.config.factoryAddress = config.networks[networkId].factoryAddress;
+
+        /* Create factory instance */
+        self.factoryInstance = self.FactoryContract.at(self.config.factoryAddress);
+      }
+    }).done(function () {
+      if (!self.factoryInstance) {
+        self.connectedCallback(self.config, self.networkStatus);
         return;
       }
-
-      Logger.log('[Model] Loading model for network id ' + network_id);
-
-      /* Look up configuration constants */
-      self.tipAddress = config.networks[network_id].tipAddress;
-      self.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[network_id].defaultGasPrice, "gwei"));
-
-      /* Create factory instance */
-      self.factoryInstance = self.FactoryContract.at(config.networks[network_id].factoryAddress);
 
       /* Look up factory version */
       self.factoryInstance.VERSION(function (error, version) {
         if (error) {
-          self.connectedCallback(network_id, null, null, isConnected, hasWallet);
+          Logger.error(error);
+
+          self.connectedCallback(self.config, self.networkStatus);
         } else {
-          /* Save factory version */
-          self.version = version;
+          self.networkStatus.factoryVersion = version;
 
-          self.connectedCallback(network_id, version, self.factoryInstance.address, isConnected, hasWallet);
+          Logger.log("[Model] Configuration:");
+          Logger.log(self.config);
 
-          /* Create event watcher for game created */
-          self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'}, self.handleGameCreatedEvent.bind(self));
+          Logger.log("[Model] Network Status:");
+          Logger.log(self.networkStatus);
+
+          self.connectedCallback(self.config, self.networkStatus);
+
+          /* Create event watcher to get game list */
+          if (self.factoryInstance)
+            self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'}, self.handleGameCreatedEvent.bind(self));
         }
       });
     });
@@ -161,18 +175,18 @@ Model.prototype = {
     if (!this.gameInstance)
       callback("No game selected.", null);
     else
-      this.gameInstance.evolve({gasPrice: this.defaultGasPrice}, callback);
+      this.gameInstance.evolve({gasPrice: this.config.defaultGasPrice}, callback);
   },
 
   createGame: function (size, initialCells, description, callback) {
     if (!this.factoryInstance)
       callback("Factory instance not found.", null);
     else
-      this.factoryInstance.newRule110(size, initialCells, description, {gasPrice: this.defaultGasPrice}, callback);
+      this.factoryInstance.newRule110(size, initialCells, description, {gasPrice: this.config.defaultGasPrice}, callback);
   },
 
   tip: function (amount, callback) {
-    web3.eth.sendTransaction({to: this.tipAddress, value: web3.toWei(amount, 'ether'), gasPrice: this.defaultGasPrice}, callback);
+    web3.eth.sendTransaction({to: this.config.tipAddress, value: web3.toWei(amount, 'ether'), gasPrice: this.config.defaultGasPrice}, callback);
   },
 };
 
@@ -197,7 +211,8 @@ var NETWORK_BLOCK_EXPLORER = {
 var View = function () {
   /* State */
   this.gameSelectedElement = null;
-  this.networkState = {id: null, factoryVersion: null, factoryAddress: null, isConnected: false, hasWallet: false};
+  this.config = {};
+  this.networkStatus = {};
 
   /* Callbacks */
   this.buttonGameSelectCallback = null;
@@ -234,24 +249,22 @@ View.prototype = {
 
   /* Event update handlers */
 
-  handleConnectedEvent: function (networkId, factoryVersion, factoryAddress, isConnected, hasWallet) {
-    this.networkState.id = networkId;
-    this.networkState.factoryVersion = factoryVersion;
-    this.networkState.factoryAddress = factoryAddress;
-    this.networkState.isConnected = isConnected;
-    this.networkState.hasWallet = hasWallet;
+  handleConnectedEvent: function (config, networkStatus) {
+    /* Store configuration and network status */
+    this.config = config;
+    this.networkStatus = networkStatus;
 
     /* Update network name in status bar */
-    var networkName = NETWORK_NAME[networkId] || ("Unknown (" + networkId + ")");
+    var networkName = NETWORK_NAME[networkStatus.networkId] || ("Unknown (" + networkStatus.networkId + ")");
     $('#status-bar-network').append($('<b></b>').addClass('text-info').text(networkName));
 
     /* Update version in status bar */
-    if (factoryVersion) {
+    if (networkStatus.factoryVersion) {
       $('#status-bar-version').append($('<b></b>')
                                 .addClass('text-info')
                                 .append(this.formatAddressLink(
-                                   factoryAddress,
-                                   "v" + factoryVersion,
+                                   config.factoryAddress,
+                                   "v" + networkStatus.factoryVersion,
                                    true)));
     } else {
       $('#status-bar-version').append($('<b></b>').addClass('text-danger').text("Not Deployed"));
@@ -259,18 +272,17 @@ View.prototype = {
     }
 
     /* Update wallet status in status bar */
-    if (hasWallet) {
+    if (networkStatus.hasWallet)
       $('#status-bar-wallet').append($('<b></b>').addClass('text-info').text("True"));
-    } else {
+    else
       $('#status-bar-wallet').append($('<b></b>').addClass('text-danger').text("False"));
-    }
 
     /* Enable tip button if connected and user has wallet */
-    if (isConnected && hasWallet)
+    if (networkStatus.isConnected && networkStatus.hasWallet)
       $('#tip-button').prop('disabled', false);
 
     /* Enable create button if connected, deployed, and user has wallet */
-    if (isConnected && factoryAddress && hasWallet)
+    if (networkStatus.isConnected && networkStatus.factoryVersion && networkStatus.hasWallet)
       $('#create-button').prop('disabled', false);
   },
 
@@ -342,7 +354,7 @@ View.prototype = {
                                                 .addClass('table-info');
 
       /* Enable evolve button if connected and user has wallet */
-      if (self.networkState.isConnected && self.networkState.hasWallet)
+      if (self.networkStatus.isConnected && self.networkStatus.hasWallet)
         $('#evolve-button').prop('disabled', false);
 
       /* Update game information */
@@ -505,7 +517,7 @@ View.prototype = {
   /* Helper functions to format block explorer links */
 
   formatTxidLink: function (txid, text, addIcon) {
-    var baseUrl = NETWORK_BLOCK_EXPLORER[this.networkState.id];
+    var baseUrl = NETWORK_BLOCK_EXPLORER[this.networkStatus.networkId];
 
     if (baseUrl) {
       var elem = $('<a></a>')
@@ -523,7 +535,7 @@ View.prototype = {
   },
 
   formatAddressLink: function (address, text, addIcon) {
-    var baseUrl = NETWORK_BLOCK_EXPLORER[this.networkState.id];
+    var baseUrl = NETWORK_BLOCK_EXPLORER[this.networkStatus.networkId];
 
     if (baseUrl) {
       var elem = $('<a></a>')
