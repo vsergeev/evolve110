@@ -407,7 +407,8 @@ View.prototype = {
         Logger.log("[View] Evolve succeeded, txid " + txid);
 
         var msg = $("<span></span>").text("Transaction ID: ")
-                                    .append(self.formatTxidLink(txid, txid, true));
+                    .append($("<span></span>").addClass("mono")
+                              .append(self.formatTxidLink(txid, txid, true)));
         self.showResultModal(true, "Evolve succeeded", msg);
       }
     });
@@ -467,7 +468,8 @@ View.prototype = {
         Logger.log("[View] Create succeeded, txid " + txid);
 
         var msg = $("<span></span>").text("Transaction ID: ")
-                                    .append(self.formatTxidLink(txid, txid, true));
+                    .append($("<span></span>").addClass("mono")
+                              .append(self.formatTxidLink(txid, txid, true)));
         self.showResultModal(true, "Create game succeeded", msg);
       }
     });
@@ -498,7 +500,8 @@ View.prototype = {
         Logger.log("[View] Tip succeeded, txid " + txid);
 
         var msg = $("<span></span>").text("Transaction ID: ")
-                                    .append(self.formatTxidLink(txid, txid, true));
+                    .append($("<span></span>").addClass("mono")
+                              .append(self.formatTxidLink(txid, txid, true)));
         self.showResultModal(true, "Tip succeeded", msg);
       }
     });
