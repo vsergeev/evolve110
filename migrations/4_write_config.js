@@ -15,29 +15,50 @@ module.exports = function(deployer, network) {
       Rule110Factory: Rule110FactoryInfo.abi,
       Rule110: Rule110Info.abi,
     },
-    networks: {}
+    networks: {
+      1: {
+        factoryAddress: null,
+        defaultGasPrice: "4",
+        tipAddress: "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
+        defaultTipAmount: "0.003",
+      },
+      3: {
+        factoryAddress: null,
+        defaultGasPrice: "20",
+        tipAddress: "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
+        defaultTipAmount: "0.003",
+      },
+      4: {
+        factoryAddress: null,
+        defaultGasPrice: "20",
+        tipAddress: "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
+        defaultTipAmount: "0.003",
+      },
+      42: {
+        factoryAddress: null,
+        defaultGasPrice: "20",
+        tipAddress: "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
+        defaultTipAmount: "0.003",
+      },
+      1234: {
+        factoryAddress: null,
+        defaultGasPrice: "4",
+        tipAddress: "0xecf0744f2f71a16b831125d6cffafd6095617adf",
+        defaultTipAmount: "0.003",
+      },
+    }
   };
-
-  var tipAddresses = {
-    1:    "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
-    3:    "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
-    4:    "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
-    42:   "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
-    1234: "0xecf0744f2f71a16b831125d6cffafd6095617adf",
-  }
 
   /* evolve() gas cost: (42438 gas * 4 gwei)/(1000000000 gwei/ETH) = 0.0001697520 ETH */
 
+  /* Populate factory addresses */
   for (var network in Rule110FactoryInfo.networks) {
-    config.networks[network] = {
-      factoryAddress: Rule110FactoryInfo.networks[network].address,
-      defaultGasPrice: "4",
-      tipAddress: tipAddresses[network],
-      defaultTipAmount: "0.003",
-    }
+    if (config.networks[network])
+      config.networks[network].factoryAddress = Rule110FactoryInfo.networks[network].address;
   }
 
   fs.writeFile(configPath, JSON.stringify(config), function (err) {
-    if (err) throw err;
+    if (err)
+      throw err;
   });
 }
