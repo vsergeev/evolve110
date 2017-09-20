@@ -166,6 +166,10 @@ h3 {
   word-wrap: break-word;
 }
 
+#result-modal .modal-body a {
+  white-space: pre;
+}
+
 /******************************************************************************/
 
 #status-bar {
