@@ -512,8 +512,14 @@ View.prototype = {
     var size = $('#create-size').val();
 
     try {
+      /* Clamp size between 3 to 256 */
+      size = Math.max(Math.min(Number(size), 256), 3);
+
+      /* Convert cells to big number */
+      initialCells = web3.toBigNumber(initialCells);
+
       /* Convert initial cells from number to bit string */
-      initialCells = toBitString(Number(size), web3.toBigNumber(initialCells));
+      initialCells = toBitString(size, initialCells);
 
       /* Replace bit strings with spaces / unicode blocks */
       initialCells = initialCells.replace(/0/g, " ");
