@@ -94,6 +94,9 @@ Model.prototype = {
         self.config.defaultTipAmount = config.networks[networkId].defaultTipAmount;
         self.config.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[networkId].defaultGasPrice, "gwei"));
         self.config.factoryAddress = config.networks[networkId].factoryAddress;
+        self.config.evolveGasLimit = config.networks[networkId].evolveGasLimit;
+        self.config.createGasLimit = config.networks[networkId].createGasLimit;
+        self.config.tipGasLimit = config.networks[networkId].tipGasLimit;
 
         /* Create factory instance */
         self.factoryInstance = self.FactoryContract.at(self.config.factoryAddress);
@@ -201,18 +204,18 @@ Model.prototype = {
     if (!this.gameInstance)
       callback("No game selected.", null);
     else
-      this.gameInstance.evolve({gasPrice: this.config.defaultGasPrice}, callback);
+      this.gameInstance.evolve({gas: this.config.evolveGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
   },
 
   createGame: function (size, initialCells, description, callback) {
     if (!this.factoryInstance)
       callback("Factory instance not found.", null);
     else
-      this.factoryInstance.newRule110(size, initialCells, description, {gasPrice: this.config.defaultGasPrice}, callback);
+      this.factoryInstance.newRule110(size, initialCells, description, {gas: this.config.createGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
   },
 
   tip: function (amount, callback) {
-    web3.eth.sendTransaction({to: this.config.tipAddress, value: web3.toWei(amount, 'ether'), gasPrice: this.config.defaultGasPrice}, callback);
+    web3.eth.sendTransaction({to: this.config.tipAddress, value: web3.toWei(amount, 'ether'), gas: this.config.tipGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
   },
 };
 
