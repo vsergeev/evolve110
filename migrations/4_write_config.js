@@ -18,6 +18,7 @@ module.exports = function(deployer, network) {
     networks: {
       1: {
         factoryAddress: null,
+        factoryBlockNumber: 0,
         defaultGasPrice: "4",
         tipAddress: "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
         defaultTipAmount: "0.003",
@@ -27,6 +28,7 @@ module.exports = function(deployer, network) {
       },
       3: {
         factoryAddress: null,
+        factoryBlockNumber: 0,
         defaultGasPrice: "20",
         tipAddress: "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
         defaultTipAmount: "0.003",
@@ -36,6 +38,7 @@ module.exports = function(deployer, network) {
       },
       4: {
         factoryAddress: null,
+        factoryBlockNumber: 0,
         defaultGasPrice: "20",
         tipAddress: "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
         defaultTipAmount: "0.003",
@@ -45,6 +48,7 @@ module.exports = function(deployer, network) {
       },
       42: {
         factoryAddress: null,
+        factoryBlockNumber: 0,
         defaultGasPrice: "20",
         tipAddress: "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
         defaultTipAmount: "0.003",
@@ -54,6 +58,7 @@ module.exports = function(deployer, network) {
       },
       1234: {
         factoryAddress: null,
+        factoryBlockNumber: 0,
         defaultGasPrice: "4",
         tipAddress: "0xecf0744f2f71a16b831125d6cffafd6095617adf",
         defaultTipAmount: "0.003",
@@ -71,6 +76,8 @@ module.exports = function(deployer, network) {
     if (config.networks[network])
       config.networks[network].factoryAddress = Rule110FactoryInfo.networks[network].address;
   }
+
+  /* FIXME populate factory block number dynamically, once truffle exposes it */
 
   fs.writeFile(configPath, JSON.stringify(config), function (err) {
     if (err)
