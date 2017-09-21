@@ -49,7 +49,7 @@ var Model = function (web3) {
 
   /* Configuration and network status */
   this.config = {defaultGasPrice: null, tipAddress: null, defaultTipAmount: null, factoryAddress: null};
-  this.networkStatus = {factoryVersion: null, networkId: null, isConnected: false, hasWallet: false};
+  this.networkStatus = {factoryVersion: null, networkId: null, hasWallet: false};
 
   /* State */
   this.factoryInstance = null;
@@ -78,7 +78,6 @@ Model.prototype = {
 
       /* Assess network status */
       self.networkStatus.networkId = self.web3.version.network;
-      self.networkStatus.isConnected = self.web3.isConnected();
       self.networkStatus.hasWallet = web3.eth.defaultAccount != undefined;
 
       var networkId = self.networkStatus.networkId;
@@ -316,14 +315,15 @@ View.prototype = {
     else
       $('#status-bar-wallet').append($('<b></b>').addClass('text-danger').text("False"));
 
+    /* Update tip amount with default */
+    $('#tip-amount').val(config.defaultTipAmount);
+
     /* Enable tip button if connected and user has wallet */
-    if (networkStatus.isConnected && networkStatus.hasWallet) {
-      $('#tip-amount').val(config.defaultTipAmount);
+    if (networkStatus.hasWallet)
       $('#tip-button').prop('disabled', false);
-    }
 
     /* Enable create button if connected, deployed, and user has wallet */
-    if (networkStatus.isConnected && networkStatus.factoryVersion && networkStatus.hasWallet)
+    if (networkStatus.factoryVersion && networkStatus.hasWallet)
       $('#create-button').prop('disabled', false);
   },
 
@@ -404,7 +404,7 @@ View.prototype = {
                                                          .addClass('table-info');
 
         /* Enable evolve button if connected and user has wallet */
-        if (self.networkStatus.isConnected && self.networkStatus.hasWallet)
+        if (self.networkStatus.hasWallet)
           $('#evolve-button').prop('disabled', false);
 
         /* Update game information */
