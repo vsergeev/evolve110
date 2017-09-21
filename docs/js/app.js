@@ -147,7 +147,7 @@ Model.prototype = {
       var index = this.gameList.length;
 
       /* Save it to our list */
-      this.gameList.push({address: address, size: size, description: description});
+      this.gameList.push({address: address, size: size, description: description, blockNumber: result.blockNumber});
 
       /* Notify our callback */
       this.gameAddedCallback(index, address, size, description);
@@ -177,6 +177,7 @@ Model.prototype = {
     var address = this.gameList[index].address;
     var size = this.gameList[index].size;
     var description = this.gameList[index].description;
+    var blockNumber = this.gameList[index].blockNumber;
 
     Logger.log("[Model] Selecting game at address " + address + ", with size " + size + ", and description " + description);
 
@@ -194,7 +195,8 @@ Model.prototype = {
       this.gameStateUpdatedEvent.stopWatching();
 
     /* Register watch handler for game state events */
-    this.gameStateUpdatedEvent = this.gameInstance.GameStateUpdated(null, {fromBlock: 0, toBlock: 'latest'}, this.handleGameStateUpdatedEvent.bind(this));
+    this.gameStateUpdatedEvent = this.gameInstance.GameStateUpdated(null, {fromBlock: blockNumber, toBlock: 'latest'},
+                                                                    this.handleGameStateUpdatedEvent.bind(this));
 
     /* Notify our callback */
     callback({address: address, size: size, description: description});
