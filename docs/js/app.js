@@ -690,7 +690,8 @@ App = {
     if (typeof web3 !== 'undefined') {
       window.web3 = new Web3(web3.currentProvider);
     } else {
-      window.web3 = new Web3(new Web3.providers.HttpProvider('https://ropsten.infura.io/rdkuEWbeKAjSR9jZ6P1h'));
+      var provider = new ZeroClientProvider({getAccounts: function () { }, rpcUrl: 'https://ropsten.infura.io/rdkuEWbeKAjSR9jZ6P1h'});
+      window.web3 = new Web3(provider);
     }
 
     App.model = new Model(window.web3);
