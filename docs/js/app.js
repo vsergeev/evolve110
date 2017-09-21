@@ -418,7 +418,8 @@ View.prototype = {
 
         var msg = $("<span></span>").text("Transaction ID: ")
                     .append($("<span></span>").addClass("mono")
-                              .append(self.formatTxidLink(txid, txid, true)));
+                              .append(self.formatTxidLink(txid, txid, true)))
+                    .append("<br><br>New cells will be appear in green on the game board, once the transaction has been mined.");
         self.showResultModal(true, "Evolve succeeded", msg);
       }
     });
@@ -481,7 +482,8 @@ View.prototype = {
 
         var msg = $("<span></span>").text("Transaction ID: ")
                     .append($("<span></span>").addClass("mono")
-                              .append(self.formatTxidLink(txid, txid, true)));
+                              .append(self.formatTxidLink(txid, txid, true)))
+                    .append("<br><br>New game will appear in green on the game list, once the transaction has been mined.");
         self.showResultModal(true, "Create game succeeded", msg);
       }
     });
@@ -513,7 +515,8 @@ View.prototype = {
 
         var msg = $("<span></span>").text("Transaction ID: ")
                     .append($("<span></span>").addClass("mono")
-                              .append(self.formatTxidLink(txid, txid, true)));
+                              .append(self.formatTxidLink(txid, txid, true)))
+                    .append("<br><br>Thank you!");
         self.showResultModal(true, "Tip succeeded", msg);
       }
     });
