@@ -704,8 +704,6 @@ App = {
   },
 };
 
-$(function () {
-  $(window).on('load', function () {
-    App.init();
-  });
-});
+window.onload = function () {
+  App.init();
+}
