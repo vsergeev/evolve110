@@ -175,11 +175,12 @@ Model.prototype = {
       var txid = result.transactionHash;
 
       this.activeGame.cells.push(cells);
+      var numEvolutions = this.activeGame.cells.length-1;
 
       Logger.log("[Model] Game state updated with cells " + cells + " from txid " + txid);
 
       /* Notify our callback */
-      this.gameStateUpdatedCallback(cells, txid);
+      this.gameStateUpdatedCallback(cells, numEvolutions, txid);
     }
   },
 
@@ -366,7 +367,7 @@ View.prototype = {
       this.handleButtonGameSelect(0);
   },
 
-  handleGameStateUpdatedEvent: function (cells, txid) {
+  handleGameStateUpdatedEvent: function (cells, numEvolutions, txid) {
     Logger.log("[View] Updating game cells");
 
     /* Replace bit strings with spaces / unicode blocks */
@@ -378,6 +379,9 @@ View.prototype = {
                               .html(this.formatTxidLink(txid, cells))
                               .toggleClass('highlight', Boolean(this.highlightTxids[txid])))
                      .append($('<br/>'));
+
+    /* Update number of evolutions */
+    $('#game-evolutions').text(numEvolutions);
   },
 
   /* Button handlers */
@@ -392,6 +396,7 @@ View.prototype = {
     $('#game-address').text("");
     $('#game-size').text("");
     $('#game-description').text("");
+    $('#game-evolutions').text("");
 
     /* Clear game board */
     $('#game .board').empty();
