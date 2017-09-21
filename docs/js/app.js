@@ -150,7 +150,7 @@ Model.prototype = {
       this.gameList.push({address: address, size: size, description: description, blockNumber: result.blockNumber});
 
       /* Notify our callback */
-      this.gameAddedCallback(index, address, size, description);
+      this.gameAddedCallback(index, address, size, description, result.transactionHash);
     }
   },
 
@@ -246,6 +246,7 @@ var View = function () {
 
   /* State */
   this.gameListHighlightedElement = null;
+  this.highlightTxids = {};
 
   /* Callbacks */
   this.buttonGameSelectCallback = null;
@@ -318,11 +319,12 @@ View.prototype = {
       $('#create-button').prop('disabled', false);
   },
 
-  handleGameAddedEvent: function (index, address, size, description) {
+  handleGameAddedEvent: function (index, address, size, description, txid) {
     Logger.log("[View] Adding game with address " + address + ", size " + size + ", and description " + description);
 
     /* Create row for game list */
     var elem = $('<tr></tr>')
+                .toggleClass('table-success', Boolean(this.highlightTxids[txid]))
                 .append($('<td></td>')
                   .addClass('mono')
                   .append($('<a />')
@@ -351,7 +353,8 @@ View.prototype = {
 
     /* Add row to game board */
     $('#game .board').append($('<span></span>')
-                              .html(this.formatTxidLink(txid, cells)))
+                              .html(this.formatTxidLink(txid, cells))
+                              .toggleClass('highlight', Boolean(this.highlightTxids[txid])))
                      .append($('<br/>'));
   },
 
@@ -410,6 +413,8 @@ View.prototype = {
         self.showResultModal(false, "Evolve failed", msg);
       } else {
         Logger.log("[View] Evolve succeeded, txid " + txid);
+
+        self.highlightTxids[txid] = true;
 
         var msg = $("<span></span>").text("Transaction ID: ")
                     .append($("<span></span>").addClass("mono")
@@ -471,6 +476,8 @@ View.prototype = {
         self.showResultModal(false, "Create game failed", msg);
       } else {
         Logger.log("[View] Create succeeded, txid " + txid);
+
+        self.highlightTxids[txid] = true;
 
         var msg = $("<span></span>").text("Transaction ID: ")
                     .append($("<span></span>").addClass("mono")

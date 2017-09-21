@@ -71,6 +71,14 @@ h3 {
   text-decoration: none;
 }
 
+#game .board .highlight a {
+  color: green;
+}
+
+#game .board .highlight a:hover {
+  color: #0056b3;
+}
+
 #game button {
   min-width: 10rem;
 }
