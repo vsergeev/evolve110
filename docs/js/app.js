@@ -84,7 +84,7 @@ Model.prototype = {
       var networkId = self.networkStatus.networkId;
 
       /* Check if this network is supported */
-      if (config.networks[networkId] == undefined) {
+      if (!config.networks[networkId] || !config.networks[networkId].factoryAddress) {
         Logger.log('[Model] Not deployed on network id ' + networkId);
       } else {
         Logger.log('[Model] Loading model for network id ' + networkId);
