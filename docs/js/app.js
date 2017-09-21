@@ -191,15 +191,23 @@ Model.prototype = {
     this.activeGame.cells = [];
 
     /* Cancel existing watch handler */
-    if (this.gameStateUpdatedEvent)
-      this.gameStateUpdatedEvent.stopWatching();
+    var cancelFunction = this.gameStateUpdatedEvent ? this.gameStateUpdatedEvent.stopWatching.bind(this.gameStateUpdatedEvent)
+                                                    : function (f) { f(); };
 
-    /* Register watch handler for game state events */
-    this.gameStateUpdatedEvent = this.gameInstance.GameStateUpdated(null, {fromBlock: blockNumber, toBlock: 'latest'},
-                                                                    this.handleGameStateUpdatedEvent.bind(this));
+    var self = this;
 
-    /* Notify our callback */
-    callback({address: address, size: size, description: description});
+    cancelFunction(function (error, result) {
+      if (error) {
+        callback(error, null)
+      } else {
+        /* Register watch handler for game state events */
+        self.gameStateUpdatedEvent = self.gameInstance.GameStateUpdated(null, {fromBlock: blockNumber, toBlock: 'latest'},
+                                                                        self.handleGameStateUpdatedEvent.bind(self));
+
+        /* Notify our callback */
+        callback(null, {address: address, size: size, description: description});
+      }
+    });
   },
 
   evolveGame: function (callback) {
@@ -376,26 +384,34 @@ View.prototype = {
 
     var self = this;
 
-    this.buttonGameSelectCallback(index, function (result) {
-      Logger.log("[View] Game select, index " + index);
+    this.buttonGameSelectCallback(index, function (error, result) {
+      if (error) {
+        Logger.log("[View] Game select failed");
+        Logger.error(error);
 
-      /* Update active element in game list */
-      if (self.gameListHighlightedElement)
-        self.gameListHighlightedElement.removeClass('table-info');
+        var msg = $("<span></span>").text(error.message.split('\n')[0]);
+        self.showResultModal(false, "Game select failed", msg);
+      } else {
+        Logger.log("[View] Game select, index " + index);
 
-      self.gameListHighlightedElement = $('#game-list').find("tbody")
-                                                       .find("tr")
-                                                       .eq(index)
-                                                       .addClass('table-info');
+        /* Update active element in game list */
+        if (self.gameListHighlightedElement)
+          self.gameListHighlightedElement.removeClass('table-info');
 
-      /* Enable evolve button if connected and user has wallet */
-      if (self.networkStatus.isConnected && self.networkStatus.hasWallet)
-        $('#evolve-button').prop('disabled', false);
+        self.gameListHighlightedElement = $('#game-list').find("tbody")
+                                                         .find("tr")
+                                                         .eq(index)
+                                                         .addClass('table-info');
 
-      /* Update game information */
-      $('#game-address').append(self.formatAddressLink(result.address, result.address, true));
-      $('#game-size').text(result.size);
-      $('#game-description').text(result.description);
+        /* Enable evolve button if connected and user has wallet */
+        if (self.networkStatus.isConnected && self.networkStatus.hasWallet)
+          $('#evolve-button').prop('disabled', false);
+
+        /* Update game information */
+        $('#game-address').append(self.formatAddressLink(result.address, result.address, true));
+        $('#game-size').text(result.size);
+        $('#game-description').text(result.description);
+      }
     });
   },
 
