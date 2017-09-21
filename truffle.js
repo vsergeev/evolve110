@@ -31,6 +31,12 @@ module.exports = {
       port: 8545,
       network_id: "1234",
     },
+    mainnet: {
+      provider: provider,
+      gas: "700000",
+      gasPrice: "5000000000",
+      network_id: "1",
+    },
     ropsten: {
       provider: provider,
       gas: "700000",
