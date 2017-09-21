@@ -1,7 +1,7 @@
 var Rule110 = artifacts.require("Rule110");
 var Rule110Factory = artifacts.require("Rule110Factory");
 
-module.exports = async function(deployer, network) {
+module.exports = function(deployer, network) {
   var initialGames = [
     {description: "single cell", size: 256, evolutions: 0,
      initialCells:  web3.toBigNumber("0x1")},
@@ -33,20 +33,30 @@ module.exports = async function(deployer, network) {
     initialGames[4].evolutions = 0;
   }
 
-  var factoryInstance = await Rule110Factory.deployed();
-
   var totalGasUsed = 0;
 
-  for (let game of initialGames) {
-    var result = await factoryInstance.newRule110(game.size, game.initialCells, game.description);
-    totalGasUsed += result.receipt.gasUsed;
+  deployer.then(function () {
+    return Rule110Factory.deployed();
+  }).then(function (instance) {
+    return initialGames.reduce(function (acc, game) {
+      return acc.then(function () {
+        return instance.newRule110(game.size, game.initialCells, game.description).then(function (result) {
+          totalGasUsed += result.receipt.gasUsed;
 
-    var gameInstance = await Rule110.at(result.logs[0].args.game);
-    for (i = 0; i < game.evolutions; i++) {
-        var result = await gameInstance.evolve();
-        totalGasUsed += result.receipt.gasUsed;
-    }
-  }
+          return Rule110.at(result.logs[0].args.game).then(function (instance) {
+            return (new Array(game.evolutions).fill()).reduce(function (acc, e) {
+              return acc.then(function () {
+                return instance.evolve().then(function (result) {
+                  totalGasUsed += result.receipt.gasUsed;
+                });
+              });
+            }, Promise.resolve());
+          });
 
-  console.log("[Gas Usage] Creating initial games used " + totalGasUsed + " total gas.");
+        });
+      });
+    }, Promise.resolve());
+  }).then(function () {
+      console.log("[Gas Usage] Creating initial games used " + totalGasUsed + " total gas.");
+  });
 }
