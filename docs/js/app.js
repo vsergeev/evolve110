@@ -347,7 +347,7 @@ View.prototype = {
 
     /* Create row for game list */
     var elem = $('<tr></tr>')
-                .click(this.handleButtonGameSelect.bind(this, index))
+                .click(this.handleButtonGameSelect.bind(this, index, true))
                 .toggleClass('table-success', Boolean(this.highlightTxids[txid]))
                 .append($('<td></td>')
                           .addClass('mono')
@@ -362,7 +362,7 @@ View.prototype = {
 
     /* Select first game, if a game hasn't been selected yet */
     if (this.gameListHighlightedElement == null)
-      this.handleButtonGameSelect(0);
+      this.handleButtonGameSelect(0, false);
   },
 
   handleGameStateUpdatedEvent: function (cells, numEvolutions, txid) {
@@ -384,7 +384,7 @@ View.prototype = {
 
   /* Button handlers */
 
-  handleButtonGameSelect: function (index) {
+  handleButtonGameSelect: function (index, scroll) {
     Logger.log("[View] Game select button clicked, index " + index);
 
     /* Disable evolve button until game is loaded */
@@ -428,6 +428,10 @@ View.prototype = {
         $('#game-address').append(self.formatAddressLink(result.address, result.address, true));
         $('#game-size').text(result.size);
         $('#game-description').text(result.description);
+
+        /* Scroll up to the game */
+        if (scroll)
+          $("html, body").animate({ scrollTop: $('#game').prev().offset().top - $('#status-bar').height() }, 500);
       }
     });
   },
