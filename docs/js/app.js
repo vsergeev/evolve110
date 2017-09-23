@@ -347,17 +347,15 @@ View.prototype = {
 
     /* Create row for game list */
     var elem = $('<tr></tr>')
+                .click(this.handleButtonGameSelect.bind(this, index))
                 .toggleClass('table-success', Boolean(this.highlightTxids[txid]))
                 .append($('<td></td>')
-                  .addClass('mono')
-                  .append($('<a />')
-                    .attr('href', '#')
-                    .text(address)
-                    .click(this.handleButtonGameSelect.bind(this, index))))
+                          .addClass('mono')
+                          .text(address))
                 .append($('<td></td>')
-                    .text(size))
+                          .text(size))
                 .append($('<td></td>')
-                    .text(description));
+                          .text(description));
 
     /* Add to game list */
     $('#game-list').find("tbody").first().append(elem);

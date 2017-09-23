@@ -105,6 +105,10 @@ h3 {
   white-space: nowrap;
 }
 
+#game-list table tr {
+  cursor: pointer;
+}
+
 #game-list table td {
   overflow: hidden;
   text-overflow: ellipsis;
