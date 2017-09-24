@@ -76,70 +76,79 @@ Model.prototype = {
       if (error) {
         Logger.log('[Model] Error determining network version');
         Logger.error(error);
-
-        self.networkStatus.networkId = null;
       } else {
         self.networkStatus.networkId = result;
 
-        /* Check wallet */
-        self.networkStatus.hasWallet = web3.eth.defaultAccount != undefined;
-
-        /* Look up config */
-        $.getJSON('config.json', function (config) {
-          /* Create contract classes */
-          self.GameContract = self.web3.eth.contract(config.contracts.Rule110);
-          self.FactoryContract = self.web3.eth.contract(config.contracts.Rule110Factory);
-
-          var networkId = self.networkStatus.networkId;
-
-          /* Check if this network is supported */
-          if (!config.networks[networkId] || !config.networks[networkId].factoryAddress) {
-            Logger.log('[Model] Not deployed on network id ' + networkId);
+        /* Look up wallet accounts */
+        self.web3.eth.getAccounts(function (error, result) {
+          if (error) {
+            Logger.log('[Model] Error determining accounts');
+            Logger.error(error);
           } else {
-            Logger.log('[Model] Loading model for network id ' + networkId);
+            self.networkStatus.hasWallet = result.length > 0;
 
-            /* Look up configuration constants */
-            self.config.tipAddress = config.networks[networkId].tipAddress;
-            self.config.defaultTipAmount = config.networks[networkId].defaultTipAmount;
-            self.config.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[networkId].defaultGasPrice, "gwei"));
-            self.config.factoryAddress = config.networks[networkId].factoryAddress;
-            self.config.factoryBlockNumber = config.networks[networkId].factoryBlockNumber;
-            self.config.evolveGasLimit = config.networks[networkId].evolveGasLimit;
-            self.config.createGasLimit = config.networks[networkId].createGasLimit;
-            self.config.tipGasLimit = config.networks[networkId].tipGasLimit;
+            /* Set a default account, if it's not set (e.g. Mist) */
+            if (self.networkStatus.hasWallet && web3.eth.defaultAccount == undefined)
+              web3.eth.defaultAccount = result[0];
 
-            /* Create factory instance */
-            self.factoryInstance = self.FactoryContract.at(self.config.factoryAddress);
+            /* Look up config */
+            $.getJSON('config.json', function (config) {
+              /* Create contract classes */
+              self.GameContract = self.web3.eth.contract(config.contracts.Rule110);
+              self.FactoryContract = self.web3.eth.contract(config.contracts.Rule110Factory);
+
+              var networkId = self.networkStatus.networkId;
+
+              /* Check if this network is supported */
+              if (!config.networks[networkId] || !config.networks[networkId].factoryAddress) {
+                Logger.log('[Model] Not deployed on network id ' + networkId);
+              } else {
+                Logger.log('[Model] Loading model for network id ' + networkId);
+
+                /* Look up configuration constants */
+                self.config.tipAddress = config.networks[networkId].tipAddress;
+                self.config.defaultTipAmount = config.networks[networkId].defaultTipAmount;
+                self.config.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[networkId].defaultGasPrice, "gwei"));
+                self.config.factoryAddress = config.networks[networkId].factoryAddress;
+                self.config.factoryBlockNumber = config.networks[networkId].factoryBlockNumber;
+                self.config.evolveGasLimit = config.networks[networkId].evolveGasLimit;
+                self.config.createGasLimit = config.networks[networkId].createGasLimit;
+                self.config.tipGasLimit = config.networks[networkId].tipGasLimit;
+
+                /* Create factory instance */
+                self.factoryInstance = self.FactoryContract.at(self.config.factoryAddress);
+              }
+            }).done(function () {
+              if (!self.factoryInstance) {
+                self.connectedCallback(self.config, self.networkStatus);
+                return;
+              }
+
+              /* Look up factory version */
+              self.factoryInstance.VERSION(function (error, version) {
+                if (error) {
+                  Logger.error(error);
+
+                  self.connectedCallback(self.config, self.networkStatus);
+                } else {
+                  self.networkStatus.factoryVersion = version;
+
+                  Logger.log("[Model] Configuration:");
+                  Logger.log(self.config);
+
+                  Logger.log("[Model] Network Status:");
+                  Logger.log(self.networkStatus);
+
+                  self.connectedCallback(self.config, self.networkStatus);
+
+                  /* Create event watcher to get game list */
+                  if (self.factoryInstance)
+                    self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: self.config.factoryBlockNumber, toBlock: 'latest'},
+                                                                             self.handleGameCreatedEvent.bind(self));
+                }
+              });
+            });
           }
-        }).done(function () {
-          if (!self.factoryInstance) {
-            self.connectedCallback(self.config, self.networkStatus);
-            return;
-          }
-
-          /* Look up factory version */
-          self.factoryInstance.VERSION(function (error, version) {
-            if (error) {
-              Logger.error(error);
-
-              self.connectedCallback(self.config, self.networkStatus);
-            } else {
-              self.networkStatus.factoryVersion = version;
-
-              Logger.log("[Model] Configuration:");
-              Logger.log(self.config);
-
-              Logger.log("[Model] Network Status:");
-              Logger.log(self.networkStatus);
-
-              self.connectedCallback(self.config, self.networkStatus);
-
-              /* Create event watcher to get game list */
-              if (self.factoryInstance)
-                self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: self.config.factoryBlockNumber, toBlock: 'latest'},
-                                                                         self.handleGameCreatedEvent.bind(self));
-            }
-          });
         });
       }
     });
