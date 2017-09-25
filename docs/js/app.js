@@ -729,7 +729,7 @@ App = {
     if (typeof web3 !== 'undefined') {
       window.web3 = new Web3(web3.currentProvider);
     } else {
-      var provider = new ZeroClientProvider({getAccounts: function (cb) { cb(null, []); }, rpcUrl: 'https://kovan.infura.io/rdkuEWbeKAjSR9jZ6P1h'});
+      var provider = new ZeroClientProvider({getAccounts: function (cb) { cb(null, []); }, rpcUrl: 'https://mainnet.infura.io/rdkuEWbeKAjSR9jZ6P1h'});
       window.web3 = new Web3(provider);
     }
 
