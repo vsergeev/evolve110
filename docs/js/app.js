@@ -107,13 +107,13 @@ Model.prototype = {
 
                 /* Look up configuration constants */
                 self.config.tipAddress = config.networks[networkId].tipAddress;
-                self.config.defaultTipAmount = config.networks[networkId].defaultTipAmount;
                 self.config.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[networkId].defaultGasPrice, "gwei"));
                 self.config.factoryAddress = config.networks[networkId].factoryAddress;
                 self.config.factoryBlockNumber = config.networks[networkId].factoryBlockNumber;
-                self.config.evolveGasLimit = config.networks[networkId].evolveGasLimit;
-                self.config.createGasLimit = config.networks[networkId].createGasLimit;
-                self.config.tipGasLimit = config.networks[networkId].tipGasLimit;
+                self.config.defaultTipAmount = config.defaultTipAmount;
+                self.config.evolveGasLimit = config.evolveGasLimit;
+                self.config.createGasLimit = config.createGasLimit;
+                self.config.tipGasLimit = config.tipGasLimit;
 
                 /* Create factory instance */
                 self.factoryInstance = self.FactoryContract.at(self.config.factoryAddress);
