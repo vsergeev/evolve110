@@ -19,8 +19,8 @@ module.exports = function(deployer, network) {
       1: {
         factoryAddress: null,
         factoryBlockNumber: 0,
-        defaultGasPrice: "4",
-        tipAddress: "0x77609A77DF4Bb5c8464ee1c84B17F934297D35F5",
+        defaultGasPrice: "5",
+        tipAddress: "0x36D87730191d02Cf0E4c9f4c1d686D65126793bd",
       },
       3: {
         factoryAddress: null,
