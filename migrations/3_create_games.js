@@ -27,10 +27,10 @@ module.exports = function(deployer, network) {
     initialGames[4].evolutions = 25;
   } else {
     initialGames[0].evolutions = 50;
-    initialGames[1].evolutions = 0;
-    initialGames[2].evolutions = 0;
-    initialGames[3].evolutions = 0;
-    initialGames[4].evolutions = 0;
+    initialGames[1].evolutions = 15;
+    initialGames[2].evolutions = 30;
+    initialGames[3].evolutions = 30;
+    initialGames[4].evolutions = 15;
   }
 
   var totalGasUsed = 0;
