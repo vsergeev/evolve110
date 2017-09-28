@@ -38,22 +38,67 @@ module.exports = function(deployer, network) {
   deployer.then(function () {
     return Rule110Factory.deployed();
   }).then(function (instance) {
+    /* Check for deployed games from a previous failed run */
+    return new Promise(function (resolve, reject) {
+      instance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'}).get(function (error, logs) {
+        if (error)
+          reject(error);
+
+        if (logs.length > 0) {
+          console.log("[Migration] Previous run deployed " + logs.length + " games.");
+
+          /* Remove successfully deployed games from our initial game list */
+          initialGames = initialGames.slice(logs.length - 1);
+
+          /* Check how far the very last deployed game got */
+          resolve(Rule110.at(logs[logs.length-1].args.game).then(function (instance) {
+            return new Promise(function (resolve, reject) {
+              instance.GameStateUpdated(null, {fromBlock: 0, toBlock: 'latest'}).get(function (error, logs) {
+                if (error)
+                  reject(error);
+
+                var numEvolutions = logs.length - 1;
+
+                initialGames[0].evolutions -= numEvolutions;
+
+                if (initialGames[0].evolutions == 0)
+                  initialGames = initialGames.slice(1);
+                else
+                  initialGames[0].instance = instance;
+
+                console.log("[Migration] Last deployed game at " + instance.address + " got " + numEvolutions + " evolutions.");
+                console.log("[Migration] Adjusted initial games. New initial games: ");
+                console.log(initialGames);
+                resolve();
+              });
+            });
+          }));
+        } else {
+          resolve();
+        }
+      });
+    }).then(function () {
+      return instance;
+    });
+  }).then(function (instance) {
     return initialGames.reduce(function (acc, game) {
       return acc.then(function () {
-        return instance.newRule110(game.size, game.initialCells, game.description).then(function (result) {
-          totalGasUsed += result.receipt.gasUsed;
-
-          return Rule110.at(result.logs[0].args.game).then(function (instance) {
-            return (new Array(game.evolutions).fill()).reduce(function (acc, e) {
-              return acc.then(function () {
-                return instance.evolve().then(function (result) {
-                  totalGasUsed += result.receipt.gasUsed;
-                });
-              });
-            }, Promise.resolve());
+        if (game.instance) {
+          return game.instance;
+        } else {
+          return instance.newRule110(game.size, game.initialCells, game.description).then(function (result) {
+              totalGasUsed += result.receipt.gasUsed;
+              return Rule110.at(result.logs[0].args.game);
           });
-
-        });
+        }
+      }).then(function (instance) {
+        return (new Array(game.evolutions).fill()).reduce(function (acc, _) {
+          return acc.then(function () {
+            return instance.evolve().then(function (result) {
+              totalGasUsed += result.receipt.gasUsed;
+            });
+          });
+        }, Promise.resolve());
       });
     }, Promise.resolve());
   }).then(function () {
