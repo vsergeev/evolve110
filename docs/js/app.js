@@ -88,8 +88,8 @@ Model.prototype = {
             self.networkStatus.hasWallet = result.length > 0;
 
             /* Set a default account, if it's not set (e.g. Mist) */
-            if (self.networkStatus.hasWallet && web3.eth.defaultAccount == undefined)
-              web3.eth.defaultAccount = result[0];
+            if (self.networkStatus.hasWallet && self.web3.eth.defaultAccount == undefined)
+              self.web3.eth.defaultAccount = result[0];
 
             /* Look up config */
             $.getJSON('config.json', function (config) {
@@ -162,7 +162,7 @@ Model.prototype = {
     } else {
       var address = result.args.game;
       var size = result.args.size;
-      var description = this.web3.toUtf8(result.args.description);
+      var description = web3.toUtf8(result.args.description);
 
       Logger.log("[Model] Game created at " + address + ", with size " + size + ", and description " + description);
 
@@ -248,7 +248,7 @@ Model.prototype = {
   },
 
   tip: function (amount, callback) {
-    web3.eth.sendTransaction({to: this.config.tipAddress, value: web3.toWei(amount, 'ether'), gas: this.config.tipGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
+    this.web3.eth.sendTransaction({to: this.config.tipAddress, value: web3.toWei(amount, 'ether'), gas: this.config.tipGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
   },
 };
 
