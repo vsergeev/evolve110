@@ -343,12 +343,29 @@ View.prototype = {
     $('#tip-amount').val(config.defaultTipAmount);
 
     /* Enable tip button if connected and user has wallet */
-    if (networkStatus.hasWallet)
+    if (networkStatus.hasWallet) {
       $('#tip-button').prop('disabled', false);
+    } else {
+      $('#tip-button').prop('data-toggle', 'tooltip')
+                      .prop('title', 'Please enable a wallet.');
+    }
 
-    /* Enable create button if connected, deployed, and user has wallet */
-    if (networkStatus.factoryVersion && networkStatus.hasWallet)
+    /* Enable create button if deployed, and user has wallet */
+    if (networkStatus.factoryVersion && networkStatus.hasWallet) {
       $('#create-button').prop('disabled', false);
+    } else if (!networkStatus.factoryVersion) {
+      $('#create-button').prop('data-toggle', 'tooltip')
+                         .prop('title', 'Unsupported network.');
+    } else if (!networkStatus.hasWallet) {
+      $('#create-button').prop('data-toggle', 'tooltip')
+                         .prop('title', 'Please enable a wallet.');
+    }
+
+    /* Add tooltip to disabled evolve button if not deployed */
+    if (!networkStatus.factoryVersion) {
+      $('#evolve-button').prop('data-toggle', 'tooltip')
+                         .prop('title', 'Unsupported network.');
+    }
   },
 
   handleGameAddedEvent: function (index, address, size, description, txid) {
@@ -430,8 +447,12 @@ View.prototype = {
                                                          .addClass('table-info');
 
         /* Enable evolve button if connected and user has wallet */
-        if (self.networkStatus.hasWallet)
+        if (self.networkStatus.hasWallet) {
           $('#evolve-button').prop('disabled', false);
+        } else {
+          $('#evolve-button').prop('data-toggle', 'tooltip')
+                             .prop('title', 'Please enable a wallet.');
+        }
 
         /* Update game information */
         $('#game-address').append(self.formatAddressLink(result.address, result.address, true));
