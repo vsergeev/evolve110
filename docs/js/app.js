@@ -346,25 +346,29 @@ View.prototype = {
     if (networkStatus.hasWallet) {
       $('#tip-button').prop('disabled', false);
     } else {
-      $('#tip-button').prop('data-toggle', 'tooltip')
-                      .prop('title', 'Please enable a wallet.');
+      $('#tip-button-tooltip').attr('data-toggle', 'tooltip')
+                              .prop('title', 'Please enable a wallet.')
+                              .tooltip();
     }
 
     /* Enable create button if deployed, and user has wallet */
     if (networkStatus.factoryVersion && networkStatus.hasWallet) {
       $('#create-button').prop('disabled', false);
     } else if (!networkStatus.factoryVersion) {
-      $('#create-button').prop('data-toggle', 'tooltip')
-                         .prop('title', 'Unsupported network.');
+      $('#create-button-tooltip').attr('data-toggle', 'tooltip')
+                                 .prop('title', 'Unsupported network.')
+                                 .tooltip();
     } else if (!networkStatus.hasWallet) {
-      $('#create-button').prop('data-toggle', 'tooltip')
-                         .prop('title', 'Please enable a wallet.');
+      $('#create-button-tooltip').attr('data-toggle', 'tooltip')
+                                 .prop('title', 'Please enable a wallet.')
+                                 .tooltip();
     }
 
     /* Add tooltip to disabled evolve button if not deployed */
     if (!networkStatus.factoryVersion) {
-      $('#evolve-button').prop('data-toggle', 'tooltip')
-                         .prop('title', 'Unsupported network.');
+      $('#evolve-button-tooltip').attr('data-toggle', 'tooltip')
+                                 .prop('title', 'Unsupported network.')
+                                 .tooltip();
     }
   },
 
@@ -450,8 +454,9 @@ View.prototype = {
         if (self.networkStatus.hasWallet) {
           $('#evolve-button').prop('disabled', false);
         } else {
-          $('#evolve-button').prop('data-toggle', 'tooltip')
-                             .prop('title', 'Please enable a wallet.');
+          $('#evolve-button-tooltip').attr('data-toggle', 'tooltip')
+                                     .prop('title', 'Please enable a wallet.')
+                                     .tooltip();
         }
 
         /* Update game information */

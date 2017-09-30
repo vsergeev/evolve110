@@ -22,6 +22,14 @@ h3 {
   font-size: 1.0rem;
 }
 
+.disabled-tooltip {
+  display: inline-block;
+}
+
+.disabled-tooltip .btn[disabled] {
+  pointer-events: none;
+}
+
 /******************************************************************************/
 
 .description {
