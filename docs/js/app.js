@@ -731,8 +731,7 @@ App = {
     } else if (typeof web3 !== 'undefined') {
       window.web3 = new Web3(web3.currentProvider);
     } else {
-      var provider = new ZeroClientProvider({getAccounts: function (cb) { cb(null, []); }, rpcUrl: 'https://mainnet.infura.io/rdkuEWbeKAjSR9jZ6P1h'});
-      window.web3 = new Web3(provider);
+      window.web3 = new Web3("wss://mainnet.infura.io/ws/v3/60198993155044e59be1f89b8568f6c7");
     }
 
     App.model = new Model(window.web3);
