@@ -49,11 +49,11 @@ module.exports = function(deployer, network) {
     },
     defaultTipAmount: "0.003",
     tipGasLimit: "21000",
-    evolveGasLimit: "45000",
+    evolveGasLimit: "65000",
     createGasLimit: "450000",
   };
 
-  /* evolve() gas cost: (42438 gas * 4 gwei)/(1000000000 gwei/ETH) = 0.0001697520 ETH */
+  /* evolve() gas cost: (62117 gas * 4 gwei)/(1000000000 gwei/ETH) = 0.000248468 ETH */
 
   /* Populate factory addresses */
   for (var network in Rule110FactoryInfo.networks) {
