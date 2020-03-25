@@ -10,18 +10,18 @@ Use a browser wallet like [MetaMask](https://metamask.io/) to evolve an existing
 
 ## Prerequisites
 
-For development, evolve110 uses the [Truffle](http://truffleframework.com/) framework, [testrpc](https://github.com/ethereumjs/testrpc) Ethereum node, and [browser-sync](https://browsersync.io/) web server.
+For development, evolve110 uses the [Truffle](http://truffleframework.com/) framework, [ganache](https://github.com/trufflesuite/ganache) Ethereum test node, and [browser-sync](https://browsersync.io/) web server.
 
 ```
-npm install -g truffle ethereumjs-testrpc browser-sync
+npm install -g truffle ganache-cli browser-sync
 ```
 
 ## Unit Testing
 
-Start `testrpc`, and then run `truffle test`.
+Start `ganache-cli`, and then run `truffle test`.
 
 ```
-testrpc
+ganache-cli
 ```
 
 ```
@@ -30,7 +30,7 @@ truffle test
 
 ## Running Locally
 
-Use the `start.sh` script to automatically start `testrpc`, run migrations, and start the `browser-sync` web server.
+Use the `start.sh` script to automatically start `ganache`, run migrations, and start the `browser-sync` web server.
 
 ```
 ./start.sh
