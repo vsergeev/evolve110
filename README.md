@@ -6,7 +6,7 @@ Visit the live Ðapp: https://vsergeev.github.io/evolve110
 
 Visit the live Ðapp via Swarm: bzz://evolve110.eth
 
-Use a browser wallet like [MetaMask](https://metamask.io/), [Parity](https://parity.io/parity.html), or [Mist](https://github.com/ethereum/mist) to evolve an existing game or to create a new one.
+Use a browser wallet like [MetaMask](https://metamask.io/) to evolve an existing game or to create a new one.
 
 ## Prerequisites
 
