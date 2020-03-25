@@ -50,6 +50,8 @@ var Model = function (web3) {
   /* Configuration and network status */
   this.config = {defaultGasPrice: null, tipAddress: null, defaultTipAmount: null, factoryAddress: null};
   this.networkStatus = {factoryVersion: null, networkId: null, hasWallet: false};
+  this.FactoryContractInterface = null;
+  this.GameContractInterface = null;
 
   /* State */
   this.factoryInstance = null;
@@ -72,7 +74,7 @@ Model.prototype = {
     var self = this;
 
     /* Look up network id */
-    self.web3.version.getNetwork(function (error, result) {
+    self.web3.eth.net.getId(function (error, result) {
       if (error) {
         Logger.log('[Model] Error determining network version');
         Logger.error(error);
@@ -93,9 +95,9 @@ Model.prototype = {
 
             /* Look up config */
             $.getJSON('config.json', function (config) {
-              /* Create contract classes */
-              self.GameContract = self.web3.eth.contract(config.contracts.Rule110);
-              self.FactoryContract = self.web3.eth.contract(config.contracts.Rule110Factory);
+              /* Store contract interfaces */
+              self.GameContractInterface = config.contracts.Rule110;
+              self.FactoryContractInterface = config.contracts.Rule110Factory;
 
               var networkId = self.networkStatus.networkId;
 
@@ -107,7 +109,7 @@ Model.prototype = {
 
                 /* Look up configuration constants */
                 self.config.tipAddress = config.networks[networkId].tipAddress;
-                self.config.defaultGasPrice = web3.toBigNumber(web3.toWei(config.networks[networkId].defaultGasPrice, "gwei"));
+                self.config.defaultGasPrice = web3.utils.toBN(web3.utils.toWei(config.networks[networkId].defaultGasPrice, "gwei"));
                 self.config.factoryAddress = config.networks[networkId].factoryAddress;
                 self.config.factoryBlockNumber = config.networks[networkId].factoryBlockNumber;
                 self.config.defaultTipAmount = config.defaultTipAmount;
@@ -116,7 +118,7 @@ Model.prototype = {
                 self.config.tipGasLimit = config.tipGasLimit;
 
                 /* Create factory instance */
-                self.factoryInstance = self.FactoryContract.at(self.config.factoryAddress);
+                self.factoryInstance = new self.web3.eth.Contract(self.FactoryContractInterface, self.config.factoryAddress, {from: self.web3.eth.defaultAccount});
               }
             }).done(function () {
               if (!self.factoryInstance) {
@@ -125,7 +127,7 @@ Model.prototype = {
               }
 
               /* Look up factory version */
-              self.factoryInstance.VERSION(function (error, version) {
+              self.factoryInstance.methods.VERSION().call({}, function (error, version) {
                 if (error) {
                   Logger.error(error);
 
@@ -143,8 +145,8 @@ Model.prototype = {
 
                   /* Create event watcher to get game list */
                   if (self.factoryInstance)
-                    self.gameCreatedEvent = self.factoryInstance.GameCreated(null, {fromBlock: self.config.factoryBlockNumber, toBlock: 'latest'},
-                                                                             self.handleGameCreatedEvent.bind(self));
+                    self.gameCreatedEvent = self.factoryInstance.events.GameCreated(null, {fromBlock: self.config.factoryBlockNumber, toBlock: 'latest'},
+                                                                                    self.handleGameCreatedEvent.bind(self));
                 }
               });
             });
@@ -160,9 +162,9 @@ Model.prototype = {
     if (error) {
       Logger.error(error);
     } else {
-      var address = result.args.game;
-      var size = result.args.size;
-      var description = web3.toUtf8(result.args.description);
+      var address = result.returnValues.game;
+      var size = result.returnValues.size;
+      var description = web3.utils.hexToUtf8(result.returnValues.description);
 
       Logger.log("[Model] Game created at " + address + ", with size " + size + ", and description " + description);
 
@@ -180,7 +182,7 @@ Model.prototype = {
     if (error) {
       Logger.error(error);
     } else {
-      var cells = toBitString(this.activeGame.size, result.args.cells);
+      var cells = toBitString(this.activeGame.size, web3.utils.toBN(result.returnValues.cells));
       var txid = result.transactionHash;
 
       this.activeGame.cells.push(cells);
@@ -205,7 +207,7 @@ Model.prototype = {
     Logger.log("[Model] Selecting game at address " + address + ", with size " + size + ", and description " + description);
 
     /* Form contract instance */
-    this.gameInstance = this.GameContract.at(address);
+    this.gameInstance = new this.web3.eth.Contract(this.GameContractInterface, address, {from: this.web3.eth.defaultAccount});
 
     /* Save active game information */
     this.activeGame.address = address;
@@ -213,42 +215,34 @@ Model.prototype = {
     this.activeGame.size = size;
     this.activeGame.cells = [];
 
-    /* Cancel existing watch handler */
-    var cancelFunction = this.gameStateUpdatedEvent ? this.gameStateUpdatedEvent.stopWatching.bind(this.gameStateUpdatedEvent)
-                                                    : function (f) { f(); };
+    /* Cancel existing event handler */
+    if (this.gameStateUpdatedEvent)
+        this.gameStateUpdatedEvent.unsubscribe();
 
-    var self = this;
+    /* Register watch handler for game state events */
+    this.gameStateUpdatedEvent = this.gameInstance.events.GameStateUpdated(null, {fromBlock: blockNumber, toBlock: 'latest'},
+                                                                           this.handleGameStateUpdatedEvent.bind(this));
 
-    cancelFunction(function (error, result) {
-      if (error) {
-        callback(error, null)
-      } else {
-        /* Register watch handler for game state events */
-        self.gameStateUpdatedEvent = self.gameInstance.GameStateUpdated(null, {fromBlock: blockNumber, toBlock: 'latest'},
-                                                                        self.handleGameStateUpdatedEvent.bind(self));
-
-        /* Notify our callback */
-        callback(null, {address: address, size: size, description: description});
-      }
-    });
+    /* Notify our callback */
+    callback(null, {address: address, size: size, description: description});
   },
 
   evolveGame: function (callback) {
     if (!this.gameInstance)
       callback("No game selected.", null);
     else
-      this.gameInstance.evolve({gas: this.config.evolveGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
+      this.gameInstance.methods.evolve().send({gas: this.config.evolveGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
   },
 
   createGame: function (size, initialCells, description, callback) {
     if (!this.factoryInstance)
       callback("Factory instance not found.", null);
     else
-      this.factoryInstance.newRule110(size, initialCells, description, {gas: this.config.createGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
+      this.factoryInstance.methods.newRule110(size, initialCells, web3.utils.asciiToHex(description)).send({gas: this.config.createGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
   },
 
   tip: function (amount, callback) {
-    this.web3.eth.sendTransaction({to: this.config.tipAddress, value: web3.toWei(amount, 'ether'), gas: this.config.tipGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
+    this.web3.eth.sendTransaction({to: this.config.tipAddress, value: web3.utils.toWei(amount, 'ether'), gas: this.config.tipGasLimit, gasPrice: this.config.defaultGasPrice}, callback);
   },
 };
 
@@ -436,7 +430,7 @@ View.prototype = {
         Logger.log("[View] Game select failed");
         Logger.error(error);
 
-        var msg = $("<span></span>").text(error.message.split('\n')[0]);
+        var msg = $("<span></span>").text(error.message);
         self.showResultModal(false, "Game select failed", msg);
       } else {
         Logger.log("[View] Game select, index " + index);
@@ -481,7 +475,7 @@ View.prototype = {
         Logger.log("[View] Evolve failed");
         Logger.error(error);
 
-        var msg = $("<span></span>").text(error.message.split('\n')[0]);
+        var msg = $("<span></span>").text(error.message);
         self.showResultModal(false, "Evolve failed", msg);
       } else {
         Logger.log("[View] Evolve succeeded, txid " + txid);
@@ -507,7 +501,7 @@ View.prototype = {
 
     /* Validate cells are a number */
     try {
-      initialCells = web3.toBigNumber(initialCells);
+      initialCells = web3.utils.toBN(initialCells);
     } catch (err) {
       this.showResultModal(false, "Error", "Invalid game initial cells: initial cells must be a number.");
       return;
@@ -527,7 +521,7 @@ View.prototype = {
     }
 
     /* Validate initial cells are in range */
-    if (initialCells.greaterThan(web3.toBigNumber(2).pow(size).minus(1))) {
+    if (initialCells.bitLength() > size) {
       this.showResultModal(false, "Error", "Invalid game initial cells: greater than game size.");
       return;
     }
@@ -545,7 +539,7 @@ View.prototype = {
         Logger.log("[View] Create failed");
         Logger.error(error);
 
-        var msg = $("<span></span>").text(error.message.split('\n')[0]);
+        var msg = $("<span></span>").text(error.message);
         self.showResultModal(false, "Create game failed", msg);
       } else {
         Logger.log("[View] Create succeeded, txid " + txid);
@@ -580,7 +574,7 @@ View.prototype = {
         Logger.log("[View] Tip failed");
         Logger.error(error);
 
-        var msg = $("<span></span>").text(error.message.split('\n')[0]);
+        var msg = $("<span></span>").text(error.message);
         self.showResultModal(false, "Tip failed", msg);
       } else {
         Logger.log("[View] Tip succeeded, txid " + txid);
@@ -606,7 +600,7 @@ View.prototype = {
       size = Math.max(Math.min(Number(size), 256), 3);
 
       /* Convert cells to big number */
-      initialCells = web3.toBigNumber(initialCells);
+      initialCells = web3.utils.toBN(initialCells);
 
       /* Convert initial cells from number to bit string */
       initialCells = toBitString(size, initialCells);
@@ -731,7 +725,10 @@ App = {
   controller: null,
 
   init: function () {
-    if (typeof web3 !== 'undefined') {
+    if (window.ethereum) {
+      window.web3 = new Web3(window.ethereum);
+      window.ethereum.enable();
+    } else if (typeof web3 !== 'undefined') {
       window.web3 = new Web3(web3.currentProvider);
     } else {
       var provider = new ZeroClientProvider({getAccounts: function (cb) { cb(null, []); }, rpcUrl: 'https://mainnet.infura.io/rdkuEWbeKAjSR9jZ6P1h'});
