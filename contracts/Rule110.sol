@@ -23,7 +23,7 @@
  * THE SOFTWARE.
  */
 
-pragma solidity ^0.4.0;
+pragma solidity >=0.4.21 <0.7.0;
 
 contract Rule110 {
     event GameStateUpdated(uint256 cells);
@@ -31,20 +31,20 @@ contract Rule110 {
     uint256 public state;
     uint16 public size;
 
-    function Rule110(uint16 _size, uint256 initialCells) {
+    constructor(uint16 _size, uint256 initialCells) public {
         require(_size >= 3 && _size <= 256);
 
         size = _size;
         state = initialCells;
 
-        GameStateUpdated(initialCells);
+        emit GameStateUpdated(initialCells);
     }
 
     uint256 constant PAT1 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
     uint256 constant PAT2 = 0x4924924924924924924924924924924924924924924924924924924924924924;
     uint256 constant MASK = 0x2492492492492492492492492492492492492492492492492492492492492492;
 
-    function evolve() {
+    function evolve() public {
         uint256 temp;
         uint256 cell_mask;
         uint256 patt_mask;
@@ -105,16 +105,16 @@ contract Rule110 {
 
         state = mat1 & mat2 & mat3;
 
-        GameStateUpdated(state);
+        emit GameStateUpdated(state);
     }
 }
 
 contract Rule110Factory {
     event GameCreated(address game, uint16 size, bytes32 description);
 
-    string constant public VERSION = "1.0.0";
+    string constant public VERSION = "1.0.1";
 
-    function newRule110(uint16 size, uint256 initialCells, bytes32 description) {
-        GameCreated(new Rule110(size, initialCells), size, description);
+    function newRule110(uint16 size, uint256 initialCells, bytes32 description) public {
+        emit GameCreated(address(new Rule110(size, initialCells)), size, description);
     }
 }
