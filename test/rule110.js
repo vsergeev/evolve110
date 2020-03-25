@@ -36,7 +36,7 @@ contract('Rule110', function(accounts) {
     console.log("[Gas Usage] Rule110.new():               " + gasNew);
     console.log("[Gas Usage] Rule110.evolve():            " + gasEvolve);
 
-    assert(gasEvolve < 45000, "Excessive gas used for Rule110.evolve()");
+    assert(gasEvolve < 65000, "Excessive gas used for Rule110.evolve()");
   });
 
   it("should evolve correctly", async function () {
