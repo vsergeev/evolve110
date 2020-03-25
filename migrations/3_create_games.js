@@ -1,25 +1,23 @@
 var Rule110 = artifacts.require("Rule110");
 var Rule110Factory = artifacts.require("Rule110Factory");
-var util = require("util");
 
 var createGames = function (network) {
   return async function() {
     var initialGames = [
       {description: "single cell", size: 256, evolutions: 0,
-       cells: web3.toBigNumber("0x1")},
+       cells: web3.utils.toBN("0x1")},
       {description: "repeating background", size: 252, evolutions: 0,
-       cells: web3.toBigNumber("0b000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111")},
+       cells: new web3.utils.BN("000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111", 2)},
       {description: "A glider", size: 244, evolutions: 0,
-       cells: web3.toBigNumber("0b1110001001101001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011")},
+       cells: new web3.utils.BN("1110001001101001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011", 2)},
       {description: "C1 glider", size: 205, evolutions: 0,
-       cells: web3.toBigNumber("0b0001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101110110101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111")},
+       cells: new web3.utils.BN("0001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101110110101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111", 2)},
       {description: "glider gun", size: 251, evolutions: 0,
-       cells: web3.toBigNumber("0b00010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111000110000111011101011011100110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111")},
+       cells: new web3.utils.BN("00010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111000100110111000110000111011101011011100110001001101111100010011011111000100110111110001001101111100010011011111000100110111110001001101111100010011011111", 2)},
     ]
 
     if (network == "development") {
-      /* testrpc does not behave well when running `truffle test` after many
-       * mined blocks, so make no initial games for the testing environment. */
+      /* skip creating initial games for testing environment */
       initialGames = [];
     } else if (network == "local") {
       initialGames[0].evolutions = 100;
@@ -41,8 +39,7 @@ var createGames = function (network) {
     var factoryInstance = await Rule110Factory.deployed();
 
     /* Check for deployed games from a previous failed run */
-    var gameCreatedEvent = factoryInstance.GameCreated(null, {fromBlock: 0, toBlock: 'latest'});
-    var gamesCreated = await util.promisify(gameCreatedEvent.get.bind(gameCreatedEvent))();
+    var gamesCreated = await factoryInstance.getPastEvents('GameCreated', {fromBlock: 0, toBlock: 'latest'});
     if (gamesCreated.length > 0) {
       console.log("[Migration] Previous run deployed " + gamesCreated.length + " games.");
 
@@ -51,8 +48,7 @@ var createGames = function (network) {
 
       /* Check how far the very last deployed game got */
       var gameInstance = await Rule110.at(gamesCreated[gamesCreated.length-1].args.game);
-      var gameStateUpdatedEvent = gameInstance.GameStateUpdated(null, {fromBlock: 0, toBlock: 'latest'});
-      var gameStateUpdates = await util.promisify(gameStateUpdatedEvent.get.bind(gameStateUpdatedEvent))();
+      var gameStateUpdates = await gameInstance.getPastEvents('GameStateUpdated', {fromBlock: 0, toBlock: 'latest'});
       var numEvolutions = gameStateUpdates.length - 1;
 
       console.log("[Migration] Last deployed game at " + gameInstance.address + " got " + numEvolutions + " evolutions.");
@@ -77,7 +73,7 @@ var createGames = function (network) {
 
       /* Get the game instance */
       if (!initialGame.instance) {
-        var result = await factoryInstance.newRule110(initialGame.size, initialGame.cells, initialGame.description);
+        var result = await factoryInstance.newRule110(initialGame.size, initialGame.cells, web3.utils.asciiToHex(initialGame.description));
         totalGasUsed += result.receipt.gasUsed;
         gameInstance = await Rule110.at(result.logs[0].args.game);
       } else {
