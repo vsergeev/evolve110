@@ -49,7 +49,7 @@ module.exports = function(deployer, network) {
     },
     defaultTipAmount: "0.003",
     tipGasLimit: "21000",
-    evolveGasLimit: "65000",
+    evolveGasLimit: "75000",
     createGasLimit: "450000",
   };
 
