@@ -18,7 +18,7 @@ h3 {
 }
 
 .mono {
-  font-family: monospace, monospace;
+  font-family: monospace, serif;
   font-size: 1.0rem;
 }
 
@@ -77,7 +77,7 @@ h3 {
 }
 
 #game .board span {
-  font-family: monospace, monospace;
+  font-family: monospace, serif;
   white-space: pre;
 }
 
@@ -156,7 +156,7 @@ h3 {
 }
 
 #game-create .board span {
-  font-family: monospace, monospace;
+  font-family: monospace, serif;
   white-space: pre;
 }
 
